@@ -1,0 +1,3456 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>施佩妤服務處｜選舉廣告管理系統</title>
+  <meta name="theme-color" content="#3E4D84">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1A1413;
+      --muted: #7E88A6;
+      --line: #F3C2C8;
+      --paper: #FFFFFF;
+      --surface: #FFFFFF;
+      --surface-soft: #F7F9FF;
+      --blue: #3E4D84;
+      --blue-2: #6E8EC6;
+      --blue-soft: #A5B6E3;
+      --pink: #F3DEE1;
+      --pink-2: #F3C2C8;
+      --coral: #D07A7A;
+      --gold: #FFF200;
+      --green: #557C73;
+      --green-soft: #EEF7F4;
+      --amber: #9A6916;
+      --amber-soft: #FFF8B8;
+      --red: #C96262;
+      --red-soft: #FFF1F3;
+      --gray-soft: #F7F8FC;
+      --shadow: 0 8px 22px rgba(62, 77, 132, 0.08);
+      --shadow-soft: 0 4px 12px rgba(208, 122, 122, 0.12);
+      --radius: 8px;
+      --tap: 44px;
+      font-family: Arial, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      letter-spacing: 0;
+    }
+
+    html {
+      min-width: 320px;
+      scroll-behavior: smooth;
+      background: #FFFFFF;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(243, 194, 200, 0.20), transparent 26%),
+        radial-gradient(circle at 100% 0%, rgba(255, 242, 0, 0.11), transparent 22%),
+        linear-gradient(180deg, #FFFFFF 0%, #FFF9FB 46%, #FFFFFF 100%);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    .button {
+      min-height: var(--tap);
+      border: 0;
+      border-radius: 6px;
+      background: var(--blue);
+      color: #FFFFFF;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 14px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      font-weight: 900;
+      box-shadow: var(--shadow-soft);
+      transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    button:hover,
+    .button:hover {
+      background: var(--blue-2);
+    }
+
+    button:active,
+    .button:active {
+      transform: translateY(1px);
+    }
+
+    button:focus-visible,
+    .button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid rgba(110, 142, 198, 0.25);
+      outline-offset: 2px;
+    }
+
+    button.ghost,
+    .button.ghost {
+      color: var(--blue);
+      background: var(--surface-soft);
+      border: 1px solid #C9D6F4;
+      box-shadow: none;
+    }
+
+    button.warning {
+      color: var(--ink);
+      background: var(--gold);
+    }
+
+    button.danger {
+      background: var(--red);
+    }
+
+    button.compact {
+      min-height: 34px;
+      padding: 0 10px;
+      font-size: 0.9rem;
+    }
+
+    button.full {
+      width: 100%;
+    }
+
+    button i,
+    .button i {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+      stroke-width: 2.4;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: var(--tap);
+      padding: 9px 11px;
+      border: 1px solid #E8C8CC;
+      border-radius: 6px;
+      background: #FFFCFD;
+      color: var(--ink);
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    input[type="checkbox"] {
+      width: 20px;
+      min-height: 20px;
+      accent-color: var(--blue);
+    }
+
+    a {
+      color: var(--blue);
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 3px solid var(--pink-2);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar {
+      width: min(1520px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 18px 0 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 64px;
+      background: linear-gradient(90deg, var(--coral) 0 10px, transparent 10px 16px, var(--pink-2) 16px 26px, transparent 26px 100%);
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      color: var(--blue);
+      font-size: clamp(1.55rem, 2.4vw, 2rem);
+      line-height: 1.15;
+      font-weight: 900;
+    }
+
+    .brand h1 b {
+      color: #3B3535;
+      font-weight: 900;
+    }
+
+    .brand h1 strong {
+      color: var(--coral);
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+      color: #3B3535;
+      font-weight: 800;
+    }
+
+    .header-tools {
+      display: flex;
+      align-items: flex-end;
+      flex-direction: column;
+      gap: 8px;
+      color: var(--blue);
+      font-size: 0.86rem;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .file-button input {
+      display: none;
+    }
+
+    .app-shell {
+      width: min(1520px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 18px 0 36px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .tabbar {
+      position: sticky;
+      top: 95px;
+      z-index: 30;
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .tab-button {
+      min-height: 50px;
+      color: var(--blue);
+      background: #FFFFFF;
+      border: 1px solid #C9D6F4;
+      box-shadow: none;
+    }
+
+    .tab-button.active {
+      color: #FFFFFF;
+      background: var(--blue);
+      border-color: var(--blue);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .view {
+      display: none;
+      gap: 16px;
+    }
+
+    .view.active {
+      display: grid;
+    }
+
+    .panel,
+    .card,
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 7px;
+      background: var(--pink-2);
+    }
+
+    .panel.blue-line::before {
+      background: var(--blue-2);
+    }
+
+    .panel.gold-line::before {
+      background: var(--gold);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    h2,
+    h3,
+    h4 {
+      margin: 0;
+      color: var(--blue);
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    h2 {
+      font-size: 1.42rem;
+    }
+
+    h3 {
+      font-size: 1.06rem;
+    }
+
+    h4 {
+      font-size: 0.98rem;
+    }
+
+    .panel-head p,
+    .muted,
+    .field-note {
+      margin: 4px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .field-note {
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .alert {
+      padding: 12px 14px;
+      border: 1px solid #E8C8CC;
+      border-radius: 6px;
+      background: #FFF8F9;
+      color: #6A3E44;
+      font-weight: 800;
+    }
+
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: minmax(380px, 0.92fr) minmax(0, 1.35fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .split-two {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .split-three {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric-card {
+      min-height: 90px;
+      padding: 13px 12px 12px;
+      display: grid;
+      align-content: start;
+      gap: 5px;
+      box-shadow: none;
+    }
+
+    .metric-card span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 900;
+    }
+
+    .metric-card strong {
+      color: var(--blue);
+      font-size: clamp(1.25rem, 2.4vw, 2rem);
+      line-height: 1;
+      font-weight: 900;
+      word-break: break-word;
+    }
+
+    .metric-card.cost strong {
+      color: var(--coral);
+      font-size: clamp(1.15rem, 1.9vw, 1.65rem);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 12px;
+    }
+
+    .form-grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .field-full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--blue);
+      font-size: 0.83rem;
+      font-weight: 900;
+    }
+
+    .check-field {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border: 1px solid #E8C8CC;
+      border-radius: 6px;
+      background: #FFFCFD;
+      color: var(--ink);
+    }
+
+    details {
+      border-top: 1px solid #F4D4D8;
+      padding-top: 12px;
+    }
+
+    details:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--blue);
+      font-size: 1.04rem;
+      font-weight: 900;
+      list-style-position: outside;
+      padding: 6px 0;
+    }
+
+    .action-row,
+    .filter-row,
+    .button-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 1.5fr repeat(3, minmax(130px, 0.65fr));
+      gap: 10px;
+      align-items: end;
+    }
+
+    .map-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 12px;
+    }
+
+    .map-surface {
+      width: 100%;
+      min-height: 420px;
+      border: 1px solid #C9D6F4;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface-soft);
+    }
+
+    #overviewMap {
+      min-height: 360px;
+    }
+
+    .map-side {
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--dot, var(--blue));
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 0 0 4px rgba(62, 77, 132, 0.18);
+      flex: 0 0 auto;
+    }
+
+    .map-pin {
+      position: relative;
+      width: 22px;
+      height: 22px;
+      display: block;
+      border-radius: 50% 50% 50% 4px;
+      background: var(--pin, var(--blue));
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 4px 12px rgba(26, 20, 19, 0.28);
+      transform: rotate(-45deg);
+    }
+
+    .map-pin::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+    }
+
+    .pin-popup {
+      min-width: 220px;
+      display: grid;
+      gap: 6px;
+      color: var(--ink);
+    }
+
+    .pin-popup strong {
+      color: var(--blue);
+      font-size: 1rem;
+    }
+
+    .pin-popup dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 3px 8px;
+      font-size: 0.86rem;
+    }
+
+    .pin-popup dt {
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .pin-popup dd {
+      margin: 0;
+      font-weight: 800;
+    }
+
+    .popup-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .popup-actions button,
+    .popup-actions a {
+      min-height: 32px;
+      padding: 0 8px;
+      border-radius: 5px;
+      font-size: 0.78rem;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .card {
+      padding: 14px;
+      box-shadow: none;
+      display: grid;
+      gap: 10px;
+      border-left: 6px solid var(--blue-2);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-title {
+      display: grid;
+      gap: 3px;
+    }
+
+    .card-title strong {
+      color: var(--blue);
+      font-size: 1.04rem;
+      font-weight: 900;
+    }
+
+    .card-title span,
+    .meta {
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: var(--blue);
+      border: 1px solid #C9D6F4;
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .badge.red {
+      color: #8C3E3E;
+      background: var(--red-soft);
+      border-color: #F0B9BF;
+    }
+
+    .badge.green {
+      color: #305F58;
+      background: var(--green-soft);
+      border-color: #CFE9E3;
+    }
+
+    .badge.gold {
+      color: #785000;
+      background: var(--amber-soft);
+      border-color: #F1DA77;
+    }
+
+    .card dl,
+    .detail-list {
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px 12px;
+      color: var(--ink);
+      font-size: 0.9rem;
+    }
+
+    .card dt,
+    .detail-list dt {
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .card dd,
+    .detail-list dd {
+      margin: 0;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .empty {
+      padding: 18px;
+      border: 1px dashed #C9D6F4;
+      border-radius: 8px;
+      background: #FFFFFF;
+      color: var(--muted);
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .thumb-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .thumb {
+      width: 90px;
+      height: 70px;
+      border: 1px solid #E8C8CC;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--gray-soft);
+    }
+
+    .mini-table {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+      font-size: 0.9rem;
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #F4D4D8;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--blue);
+      background: var(--surface-soft);
+      font-weight: 900;
+    }
+
+    td {
+      font-weight: 800;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 80;
+      max-width: min(420px, calc(100% - 36px));
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: var(--blue);
+      color: #FFFFFF;
+      font-weight: 900;
+      box-shadow: 0 12px 28px rgba(26, 20, 19, 0.22);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1180px) {
+      .tabbar {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        top: 92px;
+      }
+
+      .workspace-grid,
+      .map-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .split-three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 780px) {
+      .topbar,
+      .app-shell {
+        width: min(100% - 24px, 1520px);
+      }
+
+      .topbar {
+        flex-direction: column;
+      }
+
+      .header-tools {
+        align-items: stretch;
+        width: 100%;
+        text-align: left;
+      }
+
+      .toolbar-row {
+        justify-content: flex-start;
+      }
+
+      .tabbar {
+        position: static;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .panel {
+        padding: 18px 14px;
+      }
+
+      .panel-head,
+      .card-head {
+        flex-direction: column;
+      }
+
+      .metrics-grid,
+      .split-two,
+      .split-three,
+      .form-grid,
+      .form-grid.three,
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+
+      .map-surface {
+        min-height: 340px;
+      }
+
+      .card dl,
+      .detail-list {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <h1><span>施佩妤服務處</span><b>｜</b><strong>選舉廣告管理系統</strong></h1>
+          <p>有妤有您，幸福同行</p>
+        </div>
+      </div>
+      <div class="header-tools">
+        <div>所有權帳號：<span id="ownerEmail">abing717@gmail.com</span></div>
+        <div id="saveStatus">Firebase 檢查中，本機快取可離線使用</div>
+        <div class="toolbar-row">
+          <button class="ghost compact" id="firebaseLoginButton" type="button"><i data-lucide="cloud"></i>雲端同步</button>
+          <button class="ghost compact" id="exportJsonButton" type="button"><i data-lucide="download"></i>匯出備份</button>
+          <label class="button ghost compact file-button"><i data-lucide="upload"></i>匯入備份<input id="importJsonInput" type="file" accept="application/json"></label>
+          <button class="ghost compact" id="clearDraftButton" type="button"><i data-lucide="rotate-ccw"></i>清空表單</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <nav class="tabbar" aria-label="主要功能">
+      <button class="tab-button active" data-view-target="dashboard" type="button"><i data-lucide="layout-dashboard"></i>廣告總覽</button>
+      <button class="tab-button" data-view-target="billboards" type="button"><i data-lucide="map-pin"></i>看板管理</button>
+      <button class="tab-button" data-view-target="vehicles" type="button"><i data-lucide="truck"></i>廣告車管理</button>
+      <button class="tab-button" data-view-target="smallAds" type="button"><i data-lucide="flag"></i>旗幟與小板</button>
+      <button class="tab-button" data-view-target="vendors" type="button"><i data-lucide="factory"></i>廠商資料</button>
+      <button class="tab-button" data-view-target="search" type="button"><i data-lucide="search"></i>搜尋篩選</button>
+      <button class="tab-button" data-view-target="analytics" type="button"><i data-lucide="bar-chart-3"></i>統計分析</button>
+    </nav>
+
+    <section class="view active" id="dashboard">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>廣告總覽儀表板</h2>
+            <p>整合大型看板、廣告車、旗幟與小型廣告板的狀態、費用、施工與拆除清單。</p>
+          </div>
+          <button id="refreshDashboardButton" class="ghost" type="button"><i data-lucide="refresh-cw"></i>重新整理</button>
+        </div>
+        <div class="metrics-grid" id="dashboardMetrics"></div>
+      </section>
+
+      <section class="panel gold-line">
+        <div class="panel-head">
+          <div>
+            <h2>費用總覽</h2>
+            <p>租借、輸出、施工、車輛與司機費用估算皆由目前資料自動彙整。</p>
+          </div>
+        </div>
+        <div class="metrics-grid" id="costMetrics"></div>
+      </section>
+
+      <div class="split-two">
+        <section class="panel blue-line">
+          <div class="panel-head">
+            <div>
+              <h2>今日待處理事項</h2>
+              <p id="todayLabel"></p>
+            </div>
+          </div>
+          <div class="list" id="todayTasks"></div>
+        </section>
+        <section class="panel blue-line">
+          <div class="panel-head">
+            <div>
+              <h2>本週待處理事項</h2>
+              <p>含待施工、待拆除與收據 / 領據行政項目。</p>
+            </div>
+          </div>
+          <div class="list" id="weekItems"></div>
+        </section>
+      </div>
+
+      <div class="split-three">
+        <section class="panel">
+          <div class="panel-head"><div><h2>尚未開立收據 / 領據</h2><p>免費借用與政治獻金行政追蹤。</p></div></div>
+          <div class="list" id="receiptList"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><div><h2>待施工清單</h2><p>大型看板輸出與施工進度。</p></div></div>
+          <div class="list" id="constructionList"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><div><h2>待拆除清單</h2><p>選後拆除定位與完成狀態。</p></div></div>
+          <div class="list" id="removalList"></div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>共用地圖總覽</h2>
+            <p>大型看板、旗幟與小型廣告板、廣告車打卡點與停靠點會整合顯示。地圖預設中心為彰化縣鹿港鎮，範圍鎖定鹿港周邊約 3 至 5 公里。</p>
+          </div>
+          <div class="legend">
+            <span><i class="dot" style="--dot:#3E4D84"></i>看板</span>
+            <span><i class="dot" style="--dot:#D07A7A"></i>小型廣告</span>
+            <span><i class="dot" style="--dot:#557C73"></i>出車定位</span>
+            <span><i class="dot" style="--dot:#FFF200"></i>待處理</span>
+          </div>
+        </div>
+        <div class="map-surface" id="overviewMap"></div>
+      </section>
+    </section>
+
+    <section class="view" id="billboards">
+      <div class="workspace-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>功能一：看板管理</h2>
+              <p>管理竹鐵架看板、外牆看板、店家立面，包含位置、租借、收據 / 領據、設計、輸出、施工與拆除。</p>
+            </div>
+          </div>
+          <form id="billboardForm" class="stack">
+            <input type="hidden" name="id">
+            <details open>
+              <summary>看板基本資料</summary>
+              <div class="form-grid">
+                <label>看板編號<input name="code" placeholder="系統可自動產生"></label>
+                <label>看板名稱<input name="name" required placeholder="例如：鹿港中山路口外牆"></label>
+                <label>看板類型<select name="type" id="billboardTypeSelect"></select></label>
+                <label>看板狀態<select name="status" id="billboardStatusSelect"></select></label>
+                <label class="field-full">地址<input name="address" placeholder="完整地址或明確位置"></label>
+                <label>鄉鎮<input name="town" value="鹿港鎮"></label>
+                <label>村里<input name="village"></label>
+                <label>路段<input name="road"></label>
+                <label>經度<input name="lng" type="number" step="0.000001"></label>
+                <label>緯度<input name="lat" type="number" step="0.000001"></label>
+                <label>看板尺寸<input name="size" placeholder="例如：12 x 8 尺"></label>
+                <label class="field-full">備註<textarea name="note"></textarea></label>
+              </div>
+            </details>
+
+            <details>
+              <summary>看板設置資訊</summary>
+              <div class="form-grid">
+                <label>看板設置範圍示意圖<input id="billboardSiteSketchInput" type="file" accept="image/*"><input type="hidden" name="siteSketch"></label>
+                <label>現場照片<input id="billboardSitePhotoInput" type="file" accept="image/*"><input type="hidden" name="sitePhoto"></label>
+                <label>街景截圖<input id="billboardStreetViewInput" type="file" accept="image/*"><input type="hidden" name="streetView"></label>
+                <div class="field-full thumb-grid" id="billboardImagePreview"></div>
+                <label>所有權人<input name="ownerName"></label>
+                <label>聯絡人<input name="contactName"></label>
+                <label>聯絡電話<input name="contactPhone" inputmode="tel"></label>
+                <label class="check-field"><input name="agreed" type="checkbox"> 是否已同意借用</label>
+                <label class="check-field"><input name="freeUse" type="checkbox"> 是否免費提供</label>
+                <label>月租金額<input name="monthlyRent" type="number" min="0" step="1"></label>
+                <label>租期（月）<input name="leaseMonths" type="number" min="0" step="0.5"></label>
+                <label>租借費用<input name="leaseCost" type="number" min="0" step="1"></label>
+                <label>租借開始日<input name="leaseStart" type="date"></label>
+                <label>租借結束日<input name="leaseEnd" type="date"></label>
+                <label>付款狀態<select name="paymentStatus" id="paymentStatusSelect"></select></label>
+                <label class="check-field"><input name="hasContract" type="checkbox"> 是否有同意書或合約</label>
+                <label class="field-full">合約照片或檔案備註<textarea name="contractNote"></textarea></label>
+                <div class="field-full action-row">
+                  <button class="ghost compact" id="recalculateLeaseButton" type="button"><i data-lucide="calculator"></i>月租 x 租期</button>
+                  <span class="field-note">租借費用會依月租金額 x 租期（月）帶入，但仍可手動修正。</span>
+                </div>
+              </div>
+            </details>
+
+            <details>
+              <summary>收據 / 領據資料</summary>
+              <div class="alert">政治獻金、免費借用、收據或領據開立，需依實際法規與會計規範確認。</div>
+              <div class="form-grid">
+                <label class="check-field field-full"><input name="receiptNeeded" type="checkbox"> 是否需開立政治獻金收據 / 領據</label>
+                <label>領據人姓名<input name="receiptName"></label>
+                <label>領據人電話<input name="receiptPhone" inputmode="tel"></label>
+                <label class="field-full">領據人地址<input name="receiptAddress"></label>
+                <label>開立金額<input name="receiptAmount" type="number" min="0" step="1"></label>
+                <label class="check-field"><input name="receiptIssued" type="checkbox"> 是否已開立</label>
+                <label>開立日期<input name="receiptDate" type="date"></label>
+                <label class="field-full">收據 / 領據備註<textarea name="receiptNote"></textarea></label>
+              </div>
+            </details>
+
+            <details>
+              <summary>看板設計</summary>
+              <div class="form-grid">
+                <label>看板主題<select name="theme" id="billboardThemeSelect"></select></label>
+                <label>設計版本<input name="designVersion" placeholder="例如：V1、V2 定稿"></label>
+                <label>設計確認日<input name="designConfirmDate" type="date"></label>
+                <label>設計狀態<select name="designStatus" id="designStatusSelect"></select></label>
+                <label class="field-full">主題內容備註<textarea name="themeNote" placeholder="例如：形象看板｜主視覺：有妤有您，幸福同行"></textarea></label>
+                <label class="field-full">看板設計圖<input id="billboardDesignInput" type="file" accept="image/*"><input type="hidden" name="designImage"></label>
+                <div class="field-full thumb-grid" id="billboardDesignPreview"></div>
+              </div>
+            </details>
+
+            <details>
+              <summary>輸出與施工資訊</summary>
+              <div class="form-grid">
+                <label>輸出經費估算<input name="outputCost" type="number" min="0" step="1"></label>
+                <label>施工經費估算<input name="constructionCost" type="number" min="0" step="1"></label>
+                <label>輸出廠商<input name="outputVendor"></label>
+                <label>輸出廠商聯絡人<input name="outputContact"></label>
+                <label>輸出廠商聯絡電話<input name="outputPhone" inputmode="tel"></label>
+                <label>施工廠商<input name="constructionVendor"></label>
+                <label>施工廠商聯絡人<input name="constructionContact"></label>
+                <label>施工廠商聯絡電話<input name="constructionPhone" inputmode="tel"></label>
+                <label>輸出送件日<input name="outputSentDate" type="date"></label>
+                <label>輸出完成日<input name="outputCompletedDate" type="date"></label>
+                <label>施工預定日<input name="constructionScheduledDate" type="date"></label>
+                <label>實際上架日<input name="installedDate" type="date"></label>
+                <label>拆除預定日<input name="removalScheduledDate" type="date"></label>
+                <label>實際拆除日<input name="removedDate" type="date"></label>
+                <label>施工狀態<select name="constructionStatus" id="constructionStatusSelect"></select></label>
+              </div>
+            </details>
+
+            <div class="button-row">
+              <button type="submit"><i data-lucide="save"></i>儲存看板</button>
+              <button class="ghost" id="newBillboardButton" type="button"><i data-lucide="file-plus"></i>新增空白看板</button>
+            </div>
+          </form>
+        </section>
+
+        <div class="stack">
+          <section class="panel blue-line">
+            <div class="panel-head">
+              <div>
+                <h2>看板地圖與圖釘導出</h2>
+                <p>點選地圖即可將經緯度帶入左側表單。不同狀態會以不同顏色圖釘顯示。</p>
+              </div>
+              <div class="button-row">
+                <button class="ghost compact" id="copyAllBillboardPinsButton" type="button"><i data-lucide="copy"></i>複製全部</button>
+                <button class="ghost compact" id="downloadBillboardCsvButton" type="button"><i data-lucide="file-down"></i>下載 CSV</button>
+              </div>
+            </div>
+            <div class="map-layout">
+              <div class="map-surface" id="billboardMap"></div>
+              <div class="map-side">
+                <div class="legend" id="billboardLegend"></div>
+                <div class="alert">廠商施工前可使用「複製圖釘位置」或「下載 CSV」取得名稱、地址、經緯度、Google Maps 連結、尺寸與施工備註。</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>看板清單</h2>
+                <p>可依名稱、地址、村里、路段、聯絡人、廠商、主題與備註搜尋。</p>
+              </div>
+            </div>
+            <div class="filter-row">
+              <label>搜尋<input id="billboardSearchInput" placeholder="輸入關鍵字"></label>
+              <label>狀態<select id="billboardStatusFilter"></select></label>
+              <label>類型<select id="billboardTypeFilter"></select></label>
+              <label>付款<select id="billboardPaymentFilter"></select></label>
+            </div>
+            <div class="list" id="billboardList"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="vehicles">
+      <div class="workspace-grid">
+        <div class="stack">
+          <section class="panel">
+            <div class="panel-head"><div><h2>功能二：廣告車管理</h2><p>管理宣傳車、小蜜蜂、司機、每日出車排班、上下班打卡定位、停靠點與路線文字紀錄。</p></div></div>
+            <div class="metrics-grid" id="vehicleMetrics"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><div><h2>車輛資料卡</h2><p>車輛類型第一版只保留宣傳車與小蜜蜂。</p></div></div>
+            <form id="vehicleForm" class="stack">
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <label>車輛編號<input name="code" placeholder="系統可自動產生"></label>
+                <label>車輛類型<select name="type" id="vehicleTypeSelect"></select></label>
+                <label>車牌號碼<input name="plate"></label>
+                <label>車款<input name="model"></label>
+                <label>車色<input name="color"></label>
+                <label>車輛狀態<select name="status" id="vehicleStatusSelect"></select></label>
+                <label>車主姓名<input name="ownerName"></label>
+                <label>車主電話<input name="ownerPhone" inputmode="tel"></label>
+                <label class="field-full">車主地址<input name="ownerAddress"></label>
+                <label>車體設計主題<input name="designTheme"></label>
+                <label class="field-full">車體設計備註<textarea name="designNote"></textarea></label>
+                <label>設計完成圖 1<input id="vehicleImage1Input" type="file" accept="image/*"><input type="hidden" name="designImage1"></label>
+                <label>設計完成圖 2<input id="vehicleImage2Input" type="file" accept="image/*"><input type="hidden" name="designImage2"></label>
+                <label>設計完成圖 3<input id="vehicleImage3Input" type="file" accept="image/*"><input type="hidden" name="designImage3"></label>
+                <label>設計完成圖 4<input id="vehicleImage4Input" type="file" accept="image/*"><input type="hidden" name="designImage4"></label>
+                <label>設計完成圖 5<input id="vehicleImage5Input" type="file" accept="image/*"><input type="hidden" name="designImage5"></label>
+                <div class="field-full thumb-grid" id="vehicleImagesPreview"></div>
+                <label>租借費用<input name="leaseCost" type="number" min="0" step="1"></label>
+                <label>每日費用<input name="dailyCost" type="number" min="0" step="1"></label>
+                <label>油資補貼<input name="fuelSubsidy" type="number" min="0" step="1"></label>
+                <label class="field-full">備註<textarea name="note"></textarea></label>
+              </div>
+              <div class="button-row">
+                <button type="submit"><i data-lucide="save"></i>儲存車輛</button>
+                <button class="ghost" id="newVehicleButton" type="button"><i data-lucide="file-plus"></i>新增車輛</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><div><h2>司機資料</h2><p>建立每日可排班司機名單與工資估算基礎。</p></div></div>
+            <form id="driverForm" class="stack">
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <label>司機編號<input name="code" placeholder="系統可自動產生"></label>
+                <label>司機姓名<input name="name" required></label>
+                <label>電話<input name="phone" inputmode="tel"></label>
+                <label>狀態<select name="status" id="driverStatusSelect"></select></label>
+                <label>可駕駛車型<input name="vehicleTypes" placeholder="宣傳車、小蜜蜂"></label>
+                <label class="check-field"><input name="selfVehicle" type="checkbox"> 是否自備車輛</label>
+                <label>日薪或車趟費<input name="dayWage" type="number" min="0" step="1"></label>
+                <label class="field-full">地址<input name="address"></label>
+                <label class="field-full">匯款資料備註<textarea name="bankNote"></textarea></label>
+                <label class="field-full">備註<textarea name="note"></textarea></label>
+              </div>
+              <div class="button-row">
+                <button type="submit"><i data-lucide="save"></i>儲存司機</button>
+                <button class="ghost" id="newDriverButton" type="button"><i data-lucide="file-plus"></i>新增司機</button>
+              </div>
+            </form>
+          </section>
+        </div>
+
+        <div class="stack">
+          <section class="panel blue-line">
+            <div class="panel-head">
+              <div><h2>每日出車與打卡</h2><p>上班 / 下班打卡會使用瀏覽器 Geolocation API 記錄時間與定位；GitHub Pages 為 HTTPS，可使用定位授權。</p></div>
+            </div>
+            <form id="shiftForm" class="stack">
+              <input type="hidden" name="id">
+              <input type="hidden" name="stopsJson" value="[]">
+              <div class="form-grid">
+                <label>出車編號<input name="code" placeholder="系統可自動產生"></label>
+                <label>日期<input name="date" type="date"></label>
+                <label>車輛<select name="vehicleId" id="shiftVehicleSelect"></select></label>
+                <label>司機<select name="driverId" id="shiftDriverSelect"></select></label>
+                <label>宣傳類型<select name="promoType" id="promoTypeSelect"></select></label>
+                <label>負責區域<input name="area" placeholder="例如：鹿港、福興"></label>
+                <label class="field-full">預定路線<textarea name="plannedRoute"></textarea></label>
+                <label class="field-full">實際路線<textarea name="actualRoute"></textarea></label>
+                <label>預計出車時間<input name="scheduledStart" type="time"></label>
+                <label>實際上班打卡時間<input name="clockInTime" type="datetime-local"></label>
+                <label>實際下班打卡時間<input name="clockOutTime" type="datetime-local"></label>
+                <label>行駛時數<input name="hours" type="number" min="0" step="0.1"></label>
+                <label>上班打卡經度<input name="clockInLng" type="number" step="0.000001"></label>
+                <label>上班打卡緯度<input name="clockInLat" type="number" step="0.000001"></label>
+                <label>下班打卡經度<input name="clockOutLng" type="number" step="0.000001"></label>
+                <label>下班打卡緯度<input name="clockOutLat" type="number" step="0.000001"></label>
+                <label>里程數<input name="mileage" type="number" min="0" step="0.1"></label>
+                <label>油資<input name="fuelCost" type="number" min="0" step="1"></label>
+                <label>今日宣傳主題<input name="topic"></label>
+                <label class="field-full">音檔或口播內容<textarea name="audioNote"></textarea></label>
+                <label class="field-full">備註<textarea name="note"></textarea></label>
+              </div>
+              <div class="button-row">
+                <button type="submit"><i data-lucide="save"></i>儲存出車</button>
+                <button class="warning" id="clockInButton" type="button"><i data-lucide="log-in"></i>上班打卡</button>
+                <button class="warning" id="clockOutButton" type="button"><i data-lucide="log-out"></i>下班打卡</button>
+                <button class="ghost" id="newShiftButton" type="button"><i data-lucide="file-plus"></i>新增出車</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><div><h2>手動停靠點</h2><p>可點選右側地圖帶入停靠點經緯度，也可手動輸入。</p></div></div>
+            <div class="form-grid">
+              <label>停靠點名稱<input id="stopNameInput" placeholder="例如：鹿港天后宮周邊"></label>
+              <label>停靠時間<input id="stopTimeInput" type="datetime-local"></label>
+              <label>經度<input id="stopLngInput" type="number" step="0.000001"></label>
+              <label>緯度<input id="stopLatInput" type="number" step="0.000001"></label>
+              <label class="field-full">停靠點備註<textarea id="stopNoteInput"></textarea></label>
+            </div>
+            <div class="button-row">
+              <button id="addStopButton" type="button"><i data-lucide="map-pin-plus"></i>新增停靠點</button>
+              <button class="ghost" id="locateStopButton" type="button"><i data-lucide="locate-fixed"></i>使用目前定位</button>
+            </div>
+            <div class="list" id="stopList"></div>
+          </section>
+
+          <section class="panel blue-line">
+            <div class="panel-head">
+              <div><h2>廣告車地圖</h2><p>顯示今日出車車輛、上班打卡點、下班打卡點與手動停靠點。第一版不做即時 GPS 追蹤。</p></div>
+              <div class="button-row">
+                <button class="ghost compact" id="copyVehiclePointsButton" type="button"><i data-lucide="copy"></i>複製定位</button>
+                <button class="ghost compact" id="downloadVehicleCsvButton" type="button"><i data-lucide="file-down"></i>下載 CSV</button>
+              </div>
+            </div>
+            <div class="map-surface" id="vehicleMap"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><div><h2>車輛、司機與出車清單</h2><p>點選編修可回填表單。</p></div></div>
+            <div class="split-three">
+              <div><h3>車輛</h3><div class="list" id="vehicleList"></div></div>
+              <div><h3>司機</h3><div class="list" id="driverList"></div></div>
+              <div><h3>出車紀錄</h3><div class="list" id="shiftList"></div></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="smallAds">
+      <div class="workspace-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>功能三：旗幟與小型廣告板管理</h2>
+              <p>管理小型 PP 版、路口立牌、電線桿旗幟等大量點位，重點是架設照片、版本註記、地圖定位與選後拆卸。</p>
+            </div>
+          </div>
+          <form id="smallAdForm" class="stack">
+            <input type="hidden" name="id">
+            <div class="form-grid">
+              <label>編號<input name="code" placeholder="系統可自動產生"></label>
+              <label>類型<select name="type" id="smallAdTypeSelect"></select></label>
+              <label class="field-full">手動新增類型<input id="smallAdCustomTypeInput" placeholder="輸入後儲存即可加入類型"></label>
+              <label>預計使用版本<input name="plannedVersion" placeholder="例如：教育政見版"></label>
+              <label>實際使用版本<input name="actualVersion" placeholder="例如：形象主視覺版"></label>
+              <label class="field-full">版本內容備註<textarea name="versionNote" placeholder="例如：學校周邊，主打教育與親子政策"></textarea></label>
+              <label class="field-full">地址或位置描述<input name="address" placeholder="路口、電線桿、店家前等明確描述"></label>
+              <label>經度<input name="lng" type="number" step="0.000001"></label>
+              <label>緯度<input name="lat" type="number" step="0.000001"></label>
+              <label>鄉鎮<input name="town" value="鹿港鎮"></label>
+              <label>村里<input name="village"></label>
+              <label>路段<input name="road"></label>
+              <label>設置日期<input name="installDate" type="date"></label>
+              <label>設置人員<input name="installer"></label>
+              <label class="check-field"><input name="installed" type="checkbox"> 是否已架設</label>
+              <label class="check-field"><input name="needRemoval" type="checkbox"> 是否需拆除</label>
+              <label>預計拆除日<input name="removalScheduledDate" type="date"></label>
+              <label>實際拆除日<input name="removalDate" type="date"></label>
+              <label>拆除人員<input name="remover"></label>
+              <label>狀態<select name="status" id="smallAdStatusSelect"></select></label>
+              <label class="check-field"><input name="cleared" type="checkbox"> 是否完全清除</label>
+              <label>設計圖或版本示意圖<input id="smallDesignInput" type="file" accept="image/*"><input type="hidden" name="designImage"></label>
+              <label>設置照片<input id="smallInstallInput" type="file" accept="image/*"><input type="hidden" name="installPhoto"></label>
+              <label>拆除照片<input id="smallRemovalInput" type="file" accept="image/*"><input type="hidden" name="removalPhoto"></label>
+              <div class="field-full thumb-grid" id="smallImagesPreview"></div>
+              <label class="field-full">備註<textarea name="note"></textarea></label>
+            </div>
+            <div class="button-row">
+              <button type="submit"><i data-lucide="save"></i>儲存小型廣告點位</button>
+              <button class="ghost" id="newSmallAdButton" type="button"><i data-lucide="file-plus"></i>新增點位</button>
+            </div>
+          </form>
+        </section>
+
+        <div class="stack">
+          <section class="panel blue-line">
+            <div class="panel-head">
+              <div><h2>旗幟與小型廣告板地圖</h2><p>點選地圖新增位置，圖釘依狀態顯示，點選圖釘可查看照片、版本、位置與狀態。</p></div>
+              <div class="button-row">
+                <button class="ghost compact" id="copyAllSmallPinsButton" type="button"><i data-lucide="copy"></i>複製全部</button>
+                <button class="ghost compact" id="downloadSmallCsvButton" type="button"><i data-lucide="file-down"></i>下載 CSV</button>
+              </div>
+            </div>
+            <div class="map-layout">
+              <div class="map-surface" id="smallAdMap"></div>
+              <div class="map-side">
+                <div class="legend" id="smallAdLegend"></div>
+                <div class="alert">圖片欄位目前仍以 base64 隨資料暫存；Firestore 單筆文件有容量限制，正式大量圖片建議升級 Firebase Storage。</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><div><h2>小型廣告點位清單</h2><p>可依版本、位置、狀態、村里與路段篩選。</p></div></div>
+            <div class="filter-row">
+              <label>搜尋<input id="smallSearchInput" placeholder="輸入版本、位置、備註"></label>
+              <label>狀態<select id="smallStatusFilter"></select></label>
+              <label>類型<select id="smallTypeFilter"></select></label>
+              <label>拆除<select id="smallRemovalFilter"><option value="">全部</option><option value="yes">需拆除</option><option value="no">不需拆除</option></select></label>
+            </div>
+            <div class="list" id="smallAdList"></div>
+          </section>
+
+          <section class="panel gold-line">
+            <div class="panel-head"><div><h2>待拆除清單</h2><p>選後依地圖定位找回並完成拆除照片、日期、人員與完全清除勾選。</p></div></div>
+            <div class="list" id="smallRemovalList"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="vendors">
+      <section class="panel">
+        <div class="panel-head">
+          <div><h2>共用：廠商資料管理</h2><p>管理設計、輸出、施工、車體施工、車輛出租、音響設備等合作廠商。</p></div>
+        </div>
+        <form id="vendorForm" class="stack">
+          <input type="hidden" name="id">
+          <div class="form-grid three">
+            <label>廠商名稱<input name="name" required></label>
+            <label>廠商類型<select name="type" id="vendorTypeSelect"></select></label>
+            <label>聯絡人<input name="contact"></label>
+            <label>聯絡電話<input name="phone" inputmode="tel"></label>
+            <label class="field-full">服務項目<input name="services"></label>
+            <label class="field-full">備註<textarea name="note"></textarea></label>
+          </div>
+          <div class="button-row">
+            <button type="submit"><i data-lucide="save"></i>儲存廠商</button>
+            <button class="ghost" id="newVendorButton" type="button"><i data-lucide="file-plus"></i>新增廠商</button>
+          </div>
+        </form>
+      </section>
+      <section class="panel blue-line">
+        <div class="panel-head"><div><h2>廠商清單</h2><p>後續可作為看板輸出、施工與車體施工資料的來源。</p></div></div>
+        <div class="list" id="vendorList"></div>
+      </section>
+    </section>
+
+    <section class="view" id="search">
+      <section class="panel">
+        <div class="panel-head">
+          <div><h2>共用：搜尋與篩選</h2><p>跨看板、廣告車、司機、出車、旗幟、小型廣告板與廠商搜尋。</p></div>
+          <button class="ghost" id="resetSearchButton" type="button"><i data-lucide="eraser"></i>清除篩選</button>
+        </div>
+        <div class="form-grid three">
+          <label class="field-full">關鍵字<input id="globalSearchInput" placeholder="名稱、地址、村里、路段、電話、聯絡人、廠商、主題、版本、備註、車牌、司機姓名、車主姓名"></label>
+          <label>功能類別<select id="globalCategoryFilter"></select></label>
+          <label>狀態<select id="globalStatusFilter"></select></label>
+          <label>類型<select id="globalTypeFilter"></select></label>
+          <label>村里<input id="globalVillageFilter"></label>
+          <label>路段<input id="globalRoadFilter"></label>
+          <label>廠商<input id="globalVendorFilter"></label>
+          <label>付款狀態<select id="globalPaymentFilter"></select></label>
+          <label>需收據 / 領據<select id="globalReceiptNeededFilter"><option value="">全部</option><option value="yes">需要</option><option value="no">不需要</option></select></label>
+          <label>已開立收據 / 領據<select id="globalReceiptIssuedFilter"><option value="">全部</option><option value="yes">已開立</option><option value="no">未開立</option></select></label>
+          <label>是否已架設<select id="globalInstalledFilter"><option value="">全部</option><option value="yes">已架設</option><option value="no">未架設</option></select></label>
+          <label>是否需拆除<select id="globalNeedRemovalFilter"><option value="">全部</option><option value="yes">需拆除</option><option value="no">不需拆除</option></select></label>
+          <label>日期起<input id="globalDateStartFilter" type="date"></label>
+          <label>日期迄<input id="globalDateEndFilter" type="date"></label>
+        </div>
+      </section>
+      <section class="panel blue-line">
+        <div class="panel-head"><div><h2>搜尋結果</h2><p id="searchResultCount">0 筆資料</p></div></div>
+        <div class="list" id="globalSearchResults"></div>
+      </section>
+    </section>
+
+    <section class="view" id="analytics">
+      <section class="panel">
+        <div class="panel-head"><div><h2>共用：統計分析</h2><p>依目前 Firestore / 本機快取資料即時計算狀態分布、費用、出車、收據與拆除進度。</p></div></div>
+        <div class="metrics-grid" id="analyticsMetrics"></div>
+      </section>
+      <div class="split-two">
+        <section class="panel blue-line">
+          <div class="panel-head"><div><h2>狀態分布</h2><p>大型看板與小型廣告板依狀態統計。</p></div></div>
+          <div class="mini-table" id="statusSummaryTable"></div>
+        </section>
+        <section class="panel blue-line">
+          <div class="panel-head"><div><h2>車輛與司機統計</h2><p>今日出車、本週出車、工資與油資估算。</p></div></div>
+          <div class="mini-table" id="vehicleSummaryTable"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="firebase-config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      getDoc,
+      getDocs,
+      setDoc,
+      deleteDoc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      onAuthStateChanged,
+      signInWithPopup,
+      signInWithRedirect,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+    const tableNames = ["billboards", "vehicles", "drivers", "vehicleShifts", "smallAds", "vendors", "receipts"];
+    const config = window.firebaseConfig || {};
+    const requiredKeys = ["apiKey", "authDomain", "projectId", "appId"];
+    const configured = requiredKeys.every((key) => typeof config[key] === "string" && config[key].trim());
+    const callbacks = new Set();
+    const authCallbacks = new Set();
+
+    function cleanForFirestore(value) {
+      if (Array.isArray(value)) return value.map(cleanForFirestore);
+      if (value && typeof value === "object") {
+        return Object.fromEntries(
+          Object.entries(value)
+            .filter(([, child]) => child !== undefined && typeof child !== "function")
+            .map(([key, child]) => [key, cleanForFirestore(child)])
+        );
+      }
+      return value;
+    }
+
+    if (!configured) {
+      window.firestoreBridge = {
+        configured: false,
+        requireAuth: Boolean(config.requireAuth),
+        ownerEmail: config.ownerEmail || "abing717@gmail.com",
+        isConfigured: () => false,
+        authState: () => ({ ready: true, signedIn: false, email: "", requireAuth: Boolean(config.requireAuth) }),
+        onAuthChange: (callback) => callback({ ready: true, signedIn: false, email: "", requireAuth: Boolean(config.requireAuth) }),
+        signIn: async () => { throw new Error("尚未設定 firebase-config.js"); },
+        signOut: async () => {},
+        loadAll: async () => ({}),
+        syncAll: async () => {},
+        saveRecord: async () => {},
+        deleteRecord: async () => {},
+        saveSettings: async () => {},
+        subscribe: () => () => {}
+      };
+    } else {
+      const app = initializeApp(config);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+      const rootCollection = config.firestoreRootCollection || "electionAdManager";
+      const workspaceId = config.workspaceId || "main";
+      const ownerEmail = config.ownerEmail || "abing717@gmail.com";
+      const requireAuth = config.requireAuth !== false;
+      let currentUser = null;
+      let authReady = !requireAuth;
+      let authReadyResolve;
+      const authReadyPromise = new Promise((resolve) => {
+        authReadyResolve = resolve;
+        if (!requireAuth) resolve();
+      });
+      const cache = {};
+      const seenSnapshots = new Set();
+      const unsubscribers = [];
+
+      function tableCollection(table) {
+        return collection(db, rootCollection, workspaceId, table);
+      }
+
+      function settingsDoc() {
+        return doc(db, rootCollection, workspaceId, "metadata", "settings");
+      }
+
+      function authSnapshot() {
+        return {
+          ready: authReady,
+          signedIn: Boolean(currentUser),
+          email: currentUser?.email || "",
+          requireAuth,
+          ownerEmail
+        };
+      }
+
+      onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        authReady = true;
+        authReadyResolve();
+        const snapshot = authSnapshot();
+        authCallbacks.forEach((callback) => callback(snapshot));
+      });
+
+      async function ensureAuth() {
+        if (!requireAuth) return;
+        await authReadyPromise;
+        if (!currentUser) throw new Error("請先使用 Google 登入後再同步 Firestore。");
+        if (ownerEmail && currentUser.email !== ownerEmail) {
+          throw new Error(`目前登入 ${currentUser.email}，請改用 ${ownerEmail}。`);
+        }
+      }
+
+      async function readTable(table) {
+        const snap = await getDocs(tableCollection(table));
+        return snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+      }
+
+      async function loadAll() {
+        await ensureAuth();
+        const result = {};
+        const settingsSnap = await getDoc(settingsDoc());
+        result.settings = settingsSnap.exists() ? settingsSnap.data() : {};
+        for (const table of tableNames) {
+          result[table] = await readTable(table);
+        }
+        return result;
+      }
+
+      async function syncAll(data) {
+        await ensureAuth();
+        await setDoc(settingsDoc(), cleanForFirestore(data.settings || {}), { merge: true });
+        for (const table of tableNames) {
+          const wanted = new Map((data[table] || []).filter((item) => item.id).map((item) => [item.id, item]));
+          const existing = await getDocs(tableCollection(table));
+          await Promise.all(existing.docs.map((item) => wanted.has(item.id) ? Promise.resolve() : deleteDoc(item.ref)));
+          for (const item of wanted.values()) {
+            await setDoc(doc(tableCollection(table), item.id), cleanForFirestore(item), { merge: true });
+          }
+        }
+      }
+
+      async function saveRecord(table, item) {
+        await ensureAuth();
+        if (!tableNames.includes(table) || !item?.id) return;
+        await setDoc(doc(tableCollection(table), item.id), cleanForFirestore(item), { merge: true });
+      }
+
+      async function deleteRecord(table, id) {
+        await ensureAuth();
+        if (!tableNames.includes(table) || !id) return;
+        await deleteDoc(doc(tableCollection(table), id));
+      }
+
+      async function saveSettings(settings) {
+        await ensureAuth();
+        await setDoc(settingsDoc(), cleanForFirestore(settings || {}), { merge: true });
+      }
+
+      function emitCache() {
+        if (seenSnapshots.size < tableNames.length + 1) return;
+        const data = { settings: cache.settings || {} };
+        for (const table of tableNames) data[table] = cache[table] || [];
+        callbacks.forEach((callback) => callback(data));
+      }
+
+      async function subscribe(callback, onError) {
+        await ensureAuth();
+        callbacks.add(callback);
+        unsubscribers.push(onSnapshot(settingsDoc(), (snap) => {
+          cache.settings = snap.exists() ? snap.data() : {};
+          seenSnapshots.add("settings");
+          emitCache();
+        }, onError));
+        for (const table of tableNames) {
+          unsubscribers.push(onSnapshot(tableCollection(table), (snap) => {
+            cache[table] = snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+            seenSnapshots.add(table);
+            emitCache();
+          }, onError));
+        }
+        return () => {
+          callbacks.delete(callback);
+          while (unsubscribers.length) unsubscribers.pop()();
+        };
+      }
+
+      window.firestoreBridge = {
+        configured: true,
+        requireAuth,
+        ownerEmail,
+        isConfigured: () => true,
+        authState: authSnapshot,
+        onAuthChange: (callback) => {
+          authCallbacks.add(callback);
+          callback(authSnapshot());
+          return () => authCallbacks.delete(callback);
+        },
+        signIn: async () => {
+          try {
+            await signInWithPopup(auth, provider);
+          } catch (error) {
+            if (["auth/popup-blocked", "auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(error.code)) {
+              await signInWithRedirect(auth, provider);
+              return;
+            }
+            throw error;
+          }
+        },
+        signOut: async () => signOut(auth),
+        loadAll,
+        syncAll,
+        saveRecord,
+        deleteRecord,
+        saveSettings,
+        subscribe
+      };
+    }
+  </script>
+  <script>
+    const STORAGE_KEY = "shihPeiYuElectionAds.v1";
+    const LUKANG_CENTER = [24.0560, 120.4350];
+    const LUKANG_MAP_BOUNDS = [
+      [24.0110, 120.3850],
+      [24.1010, 120.4850]
+    ];
+    const OWNER_EMAIL = "abing717@gmail.com";
+    const FIRESTORE_TABLES = ["billboards", "vehicles", "drivers", "vehicleShifts", "smallAds", "vendors", "receipts"];
+
+    const OPTIONS = {
+      billboardTypes: ["竹鐵架看板", "外牆看板", "店家立面", "其他"],
+      billboardStatuses: ["待評估", "接洽中", "已同意", "待簽約", "已簽約", "設計中", "待輸出", "待施工", "已上架", "需修補", "已拆除", "已放棄"],
+      paymentStatuses: ["未付款", "已付款", "部分付款", "待請款", "免費提供", "不需費用"],
+      billboardThemes: ["形象看板", "政見看板", "其他"],
+      designStatuses: ["未開始", "設計中", "初稿完成", "修改中", "已定稿", "已送輸出"],
+      constructionStatuses: ["未開始", "設計中", "已定稿", "輸出中", "待施工", "施工完成", "需修補", "已拆除"],
+      vehicleTypes: ["宣傳車", "小蜜蜂"],
+      vehicleStatuses: ["可派車", "已排班", "出車中", "休息中", "維修中", "停用", "已退租"],
+      driverStatuses: ["可排班", "已排班", "請假", "停用"],
+      promoTypes: ["形象宣傳", "政見宣傳", "活動宣傳", "投票提醒", "搶救催票", "掃街配合", "其他"],
+      smallAdTypes: ["小型PP版", "路口立牌", "電線桿旗幟", "其他"],
+      smallAdStatuses: ["待架設", "已架設", "需補拍照片", "需修正", "待拆除", "已拆除", "遺失", "已放棄"],
+      vendorTypes: ["設計", "輸出", "施工", "車體施工", "車輛出租", "音響設備", "其他"]
+    };
+
+    const COLOR = {
+      blue: "#3E4D84",
+      blue2: "#6E8EC6",
+      pink: "#F3C2C8",
+      coral: "#D07A7A",
+      gold: "#FFF200",
+      green: "#557C73",
+      amber: "#A06C18",
+      red: "#C96262",
+      gray: "#8A94B2"
+    };
+
+    const DEFAULT_STATE = {
+      settings: {
+        ownerEmail: OWNER_EMAIL,
+        title: "施佩妤服務處｜選舉廣告管理系統",
+        smallAdTypes: OPTIONS.smallAdTypes,
+        updatedAt: ""
+      },
+      billboards: [],
+      vehicles: [],
+      drivers: [],
+      vehicleShifts: [],
+      smallAds: [],
+      vendors: [],
+      receipts: []
+    };
+
+    let state = loadState();
+    let maps = {};
+    let mapLayers = {};
+    let currentStops = [];
+    let toastTimer = null;
+    let pendingCloudMutation = null;
+    let cloudSyncReady = false;
+    let cloudUnsubscribe = null;
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+    document.addEventListener("DOMContentLoaded", initApp);
+
+    function initApp() {
+      $("#ownerEmail").textContent = state.settings.ownerEmail || OWNER_EMAIL;
+      setupSelects();
+      setupEvents();
+      bindImageFields();
+      setDefaultDates();
+      renderAll();
+      initMaps();
+      refreshMaps();
+      initializeCloudSync();
+      refreshIcons();
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        const merged = { ...DEFAULT_STATE, ...parsed };
+        merged.settings = { ...DEFAULT_STATE.settings, ...(parsed.settings || {}) };
+        for (const key of ["billboards", "vehicles", "drivers", "vehicleShifts", "smallAds", "vendors", "receipts"]) {
+          merged[key] = Array.isArray(merged[key]) ? merged[key] : [];
+        }
+        merged.settings.smallAdTypes = Array.isArray(merged.settings.smallAdTypes) ? merged.settings.smallAdTypes : OPTIONS.smallAdTypes;
+        return merged;
+      } catch (error) {
+        console.error(error);
+        return structuredClone(DEFAULT_STATE);
+      }
+    }
+
+    function saveState(message = "已儲存", options = {}) {
+      state.settings.updatedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      $("#saveStatus").textContent = `${message}｜${formatDateTime(state.settings.updatedAt)}`;
+      renderAll();
+      refreshMaps();
+      refreshIcons();
+      persistCloudChange(options);
+    }
+
+    function mergeRemoteState(remote) {
+      const merged = { ...DEFAULT_STATE, ...remote };
+      merged.settings = { ...DEFAULT_STATE.settings, ...(remote.settings || {}) };
+      for (const table of FIRESTORE_TABLES) {
+        merged[table] = Array.isArray(remote[table]) ? remote[table] : [];
+      }
+      merged.settings.smallAdTypes = Array.isArray(merged.settings.smallAdTypes) ? merged.settings.smallAdTypes : OPTIONS.smallAdTypes;
+      return merged;
+    }
+
+    function hasRecords(data) {
+      return FIRESTORE_TABLES.some((table) => Array.isArray(data[table]) && data[table].length);
+    }
+
+    function setSyncStatus(text) {
+      $("#saveStatus").textContent = text;
+    }
+
+    function updateFirebaseLoginButton(authState) {
+      const button = $("#firebaseLoginButton");
+      if (!button) return;
+      if (!window.firestoreBridge || !window.firestoreBridge.isConfigured()) {
+        button.innerHTML = '<i data-lucide="cloud-off"></i>本機模式';
+        button.disabled = true;
+        refreshIcons();
+        return;
+      }
+      button.disabled = false;
+      button.innerHTML = authState?.signedIn
+        ? '<i data-lucide="log-out"></i>登出雲端'
+        : '<i data-lucide="cloud"></i>Google 登入同步';
+      refreshIcons();
+    }
+
+    async function initializeCloudSync() {
+      const bridge = window.firestoreBridge;
+      if (!bridge || !bridge.isConfigured()) {
+        setSyncStatus("Firebase 尚未設定，目前使用本機快取模式");
+        updateFirebaseLoginButton({ signedIn: false });
+        return;
+      }
+
+      bridge.onAuthChange((authState) => {
+        updateFirebaseLoginButton(authState);
+        if (authState.requireAuth && !authState.signedIn) {
+          setSyncStatus(`請以 ${authState.ownerEmail || OWNER_EMAIL} 登入後啟用 Firestore 同步`);
+          return;
+        }
+        if (!cloudSyncReady) startCloudSync();
+      });
+    }
+
+    async function startCloudSync() {
+      const bridge = window.firestoreBridge;
+      if (!bridge || !bridge.isConfigured() || cloudSyncReady) return;
+      setSyncStatus("正在連線 Firebase Firestore...");
+      try {
+        const remote = await bridge.loadAll();
+        if (hasRecords(remote)) {
+          state = mergeRemoteState(remote);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderAll();
+          refreshMaps();
+          setSyncStatus(`已連線 Firestore｜${formatDateTime(new Date().toISOString())}`);
+        } else if (hasRecords(state)) {
+          await bridge.syncAll(state);
+          setSyncStatus("已將本機資料上傳到 Firestore");
+        } else {
+          setSyncStatus("已連線 Firestore，尚無雲端資料");
+        }
+
+        cloudUnsubscribe = await bridge.subscribe((remoteData) => {
+          if (!hasRecords(remoteData) && hasRecords(state)) return;
+          state = mergeRemoteState(remoteData);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderAll();
+          refreshMaps();
+          refreshIcons();
+          cloudSyncReady = true;
+          setSyncStatus(`Firestore 已同步｜${formatDateTime(new Date().toISOString())}`);
+        }, (error) => {
+          setSyncStatus(`Firestore 同步錯誤：${error.message || error}`);
+        });
+        cloudSyncReady = true;
+      } catch (error) {
+        setSyncStatus(`Firestore 尚未同步：${error.message || error}`);
+      }
+    }
+
+    async function persistCloudChange(options = {}) {
+      const bridge = window.firestoreBridge;
+      if (!bridge || !bridge.isConfigured()) return;
+      try {
+        if (options.syncAll) {
+          await bridge.syncAll(state);
+        } else if (pendingCloudMutation?.type === "upsert") {
+          await bridge.saveRecord(pendingCloudMutation.table, pendingCloudMutation.item);
+          await bridge.saveSettings(state.settings);
+        } else if (pendingCloudMutation?.type === "delete") {
+          await bridge.deleteRecord(pendingCloudMutation.table, pendingCloudMutation.id);
+          await bridge.saveSettings(state.settings);
+        } else {
+          await bridge.saveSettings(state.settings);
+        }
+        pendingCloudMutation = null;
+        setSyncStatus(`Firestore 已同步｜${formatDateTime(new Date().toISOString())}`);
+      } catch (error) {
+        setSyncStatus(`Firestore 待同步：${error.message || error}`);
+      }
+    }
+
+    async function toggleFirebaseLogin() {
+      const bridge = window.firestoreBridge;
+      if (!bridge || !bridge.isConfigured()) {
+        showToast("請先設定 firebase-config.js。");
+        return;
+      }
+      try {
+        if (bridge.authState().signedIn) {
+          if (cloudUnsubscribe) cloudUnsubscribe();
+          cloudUnsubscribe = null;
+          cloudSyncReady = false;
+          await bridge.signOut();
+          showToast("已登出 Firebase。");
+        } else {
+          await bridge.signIn();
+          showToast("登入後會自動同步 Firestore。");
+        }
+      } catch (error) {
+        showToast(error.message || "Firebase 登入失敗。");
+      }
+    }
+
+    function setupSelects() {
+      fillSelect("billboardTypeSelect", OPTIONS.billboardTypes);
+      fillSelect("billboardStatusSelect", OPTIONS.billboardStatuses);
+      fillSelect("paymentStatusSelect", OPTIONS.paymentStatuses);
+      fillSelect("billboardThemeSelect", OPTIONS.billboardThemes);
+      fillSelect("designStatusSelect", OPTIONS.designStatuses);
+      fillSelect("constructionStatusSelect", OPTIONS.constructionStatuses);
+      fillSelect("vehicleTypeSelect", OPTIONS.vehicleTypes);
+      fillSelect("vehicleStatusSelect", OPTIONS.vehicleStatuses);
+      fillSelect("driverStatusSelect", OPTIONS.driverStatuses);
+      fillSelect("promoTypeSelect", OPTIONS.promoTypes);
+      fillSelect("smallAdTypeSelect", state.settings.smallAdTypes);
+      fillSelect("smallAdStatusSelect", OPTIONS.smallAdStatuses);
+      fillSelect("vendorTypeSelect", OPTIONS.vendorTypes);
+
+      fillSelect("billboardStatusFilter", OPTIONS.billboardStatuses, "全部狀態");
+      fillSelect("billboardTypeFilter", OPTIONS.billboardTypes, "全部類型");
+      fillSelect("billboardPaymentFilter", OPTIONS.paymentStatuses, "全部付款");
+      fillSelect("smallStatusFilter", OPTIONS.smallAdStatuses, "全部狀態");
+      fillSelect("smallTypeFilter", state.settings.smallAdTypes, "全部類型");
+      fillSelect("globalCategoryFilter", ["看板", "車輛", "司機", "出車", "小型廣告", "廠商"], "全部功能");
+      fillSelect("globalStatusFilter", [...OPTIONS.billboardStatuses, ...OPTIONS.vehicleStatuses, ...OPTIONS.driverStatuses, ...OPTIONS.smallAdStatuses], "全部狀態");
+      fillSelect("globalTypeFilter", [...OPTIONS.billboardTypes, ...OPTIONS.vehicleTypes, ...state.settings.smallAdTypes, ...OPTIONS.vendorTypes, ...OPTIONS.promoTypes], "全部類型");
+      fillSelect("globalPaymentFilter", OPTIONS.paymentStatuses, "全部付款");
+      refreshShiftSelectors();
+    }
+
+    function fillSelect(id, values, allLabel = "") {
+      const select = $("#" + id);
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = "";
+      if (allLabel) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = allLabel;
+        select.appendChild(option);
+      }
+      [...new Set(values.filter(Boolean))].forEach((value) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+      if ([...select.options].some((option) => option.value === current)) select.value = current;
+    }
+
+    function setupEvents() {
+      $$(".tab-button, [data-view-target]").forEach((button) => {
+        button.addEventListener("click", () => switchView(button.dataset.viewTarget));
+      });
+
+      $("#billboardForm").addEventListener("submit", saveBillboard);
+      $("#vehicleForm").addEventListener("submit", saveVehicle);
+      $("#driverForm").addEventListener("submit", saveDriver);
+      $("#shiftForm").addEventListener("submit", saveShift);
+      $("#smallAdForm").addEventListener("submit", saveSmallAd);
+      $("#vendorForm").addEventListener("submit", saveVendor);
+
+      $("#newBillboardButton").addEventListener("click", () => resetBillboardForm());
+      $("#newVehicleButton").addEventListener("click", () => resetForm("vehicleForm", renderVehicleImages));
+      $("#newDriverButton").addEventListener("click", () => resetForm("driverForm"));
+      $("#newShiftButton").addEventListener("click", () => resetShiftForm());
+      $("#newSmallAdButton").addEventListener("click", () => resetSmallAdForm());
+      $("#newVendorButton").addEventListener("click", () => resetForm("vendorForm"));
+      $("#clearDraftButton").addEventListener("click", clearVisibleForm);
+
+      $("#recalculateLeaseButton").addEventListener("click", recalculateLeaseCost);
+      ["monthlyRent", "leaseMonths"].forEach((name) => {
+        $("#billboardForm").elements[name].addEventListener("input", autoLeaseCost);
+      });
+      $("#billboardForm").elements.leaseCost.addEventListener("input", () => {
+        $("#billboardForm").dataset.leaseManual = "1";
+      });
+
+      $("#clockInButton").addEventListener("click", () => clockShift("in"));
+      $("#clockOutButton").addEventListener("click", () => clockShift("out"));
+      $("#addStopButton").addEventListener("click", addStopFromInputs);
+      $("#locateStopButton").addEventListener("click", locateStop);
+
+      $("#copyAllBillboardPinsButton").addEventListener("click", copyAllBillboardPins);
+      $("#downloadBillboardCsvButton").addEventListener("click", downloadBillboardCsv);
+      $("#copyAllSmallPinsButton").addEventListener("click", copyAllSmallPins);
+      $("#downloadSmallCsvButton").addEventListener("click", downloadSmallCsv);
+      $("#copyVehiclePointsButton").addEventListener("click", copyVehiclePoints);
+      $("#downloadVehicleCsvButton").addEventListener("click", downloadVehicleCsv);
+
+      $("#firebaseLoginButton").addEventListener("click", toggleFirebaseLogin);
+      $("#exportJsonButton").addEventListener("click", exportJson);
+      $("#importJsonInput").addEventListener("change", importJson);
+      $("#refreshDashboardButton").addEventListener("click", () => {
+        renderAll();
+        refreshMaps();
+        showToast("儀表板已重新整理");
+      });
+
+      $("#resetSearchButton").addEventListener("click", resetGlobalSearch);
+
+      [
+        "billboardSearchInput", "billboardStatusFilter", "billboardTypeFilter", "billboardPaymentFilter",
+        "smallSearchInput", "smallStatusFilter", "smallTypeFilter", "smallRemovalFilter",
+        "globalSearchInput", "globalCategoryFilter", "globalStatusFilter", "globalTypeFilter",
+        "globalVillageFilter", "globalRoadFilter", "globalVendorFilter", "globalPaymentFilter",
+        "globalReceiptNeededFilter", "globalReceiptIssuedFilter", "globalInstalledFilter",
+        "globalNeedRemovalFilter", "globalDateStartFilter", "globalDateEndFilter"
+      ].forEach((id) => {
+        const element = $("#" + id);
+        if (element) element.addEventListener("input", renderAll);
+      });
+
+      document.addEventListener("click", handleActionClick);
+    }
+
+    function bindImageFields() {
+      bindImage("billboardSiteSketchInput", "billboardForm", "siteSketch", renderBillboardImages);
+      bindImage("billboardSitePhotoInput", "billboardForm", "sitePhoto", renderBillboardImages);
+      bindImage("billboardStreetViewInput", "billboardForm", "streetView", renderBillboardImages);
+      bindImage("billboardDesignInput", "billboardForm", "designImage", renderBillboardImages);
+      for (let i = 1; i <= 5; i += 1) {
+        bindImage(`vehicleImage${i}Input`, "vehicleForm", `designImage${i}`, renderVehicleImages);
+      }
+      bindImage("smallDesignInput", "smallAdForm", "designImage", renderSmallImages);
+      bindImage("smallInstallInput", "smallAdForm", "installPhoto", renderSmallImages);
+      bindImage("smallRemovalInput", "smallAdForm", "removalPhoto", renderSmallImages);
+    }
+
+    function bindImage(inputId, formId, fieldName, afterRead) {
+      const input = $("#" + inputId);
+      if (!input) return;
+      input.addEventListener("change", () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        if (file.size > 900000) {
+          showToast("圖片較大，localStorage 可能儲存失敗；建議壓縮後再上傳。");
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const form = $("#" + formId);
+          form.elements[fieldName].value = reader.result;
+          afterRead();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function setDefaultDates() {
+      const today = todayString();
+      $("#shiftForm").elements.date.value = today;
+      $("#todayLabel").textContent = today;
+    }
+
+    function switchView(viewId) {
+      if (!viewId) return;
+      $$(".view").forEach((view) => view.classList.toggle("active", view.id === viewId));
+      $$(".tab-button").forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === viewId));
+      setTimeout(() => {
+        Object.values(maps).forEach((map) => map.invalidateSize());
+        refreshMaps();
+      }, 80);
+      refreshIcons();
+    }
+
+    function initMaps() {
+      if (!window.L) {
+        showToast("Leaflet 地圖尚未載入，請確認網路連線或 Leaflet CDN。");
+        return;
+      }
+      maps.overview = createMap("overviewMap");
+      maps.billboard = createMap("billboardMap", (event) => {
+        setLatLngToForm("billboardForm", event.latlng);
+        showToast("已帶入看板經緯度");
+      });
+      maps.vehicle = createMap("vehicleMap", (event) => {
+        $("#stopLatInput").value = event.latlng.lat.toFixed(6);
+        $("#stopLngInput").value = event.latlng.lng.toFixed(6);
+        showToast("已帶入停靠點經緯度");
+      });
+      maps.smallAd = createMap("smallAdMap", (event) => {
+        setLatLngToForm("smallAdForm", event.latlng);
+        showToast("已帶入小型廣告點位經緯度");
+      });
+    }
+
+    function createMap(id, onClick) {
+      const map = L.map(id, {
+        zoomControl: true,
+        minZoom: 14,
+        maxBounds: LUKANG_MAP_BOUNDS,
+        maxBoundsViscosity: 1.0
+      }).setView(LUKANG_CENTER, 14);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(map);
+      if (onClick) map.on("click", onClick);
+      mapLayers[id] = L.layerGroup().addTo(map);
+      return map;
+    }
+
+    function refreshMaps() {
+      if (!window.L || !maps.overview) return;
+      refreshBillboardMap();
+      refreshSmallAdMap();
+      refreshVehicleMap();
+      refreshOverviewMap();
+    }
+
+    function refreshOverviewMap() {
+      const layer = mapLayers.overviewMap;
+      layer.clearLayers();
+      state.billboards.filter(hasLatLng).forEach((item) => addMarker(layer, item, "billboard", billboardColor(item.status)));
+      state.smallAds.filter(hasLatLng).forEach((item) => addMarker(layer, item, "smallAd", smallAdColor(item.status)));
+      vehiclePoints().forEach((point) => addRawPointMarker(layer, point, COLOR.green));
+    }
+
+    function refreshBillboardMap() {
+      const layer = mapLayers.billboardMap;
+      layer.clearLayers();
+      state.billboards.filter(hasLatLng).forEach((item) => addMarker(layer, item, "billboard", billboardColor(item.status)));
+      renderLegend("billboardLegend", [
+        ["已上架", billboardColor("已上架")],
+        ["待施工", billboardColor("待施工")],
+        ["接洽中", billboardColor("接洽中")],
+        ["已拆除", billboardColor("已拆除")],
+        ["需修補", billboardColor("需修補")]
+      ]);
+    }
+
+    function refreshSmallAdMap() {
+      const layer = mapLayers.smallAdMap;
+      layer.clearLayers();
+      state.smallAds.filter(hasLatLng).forEach((item) => addMarker(layer, item, "smallAd", smallAdColor(item.status)));
+      renderLegend("smallAdLegend", [
+        ["待架設", smallAdColor("待架設")],
+        ["已架設", smallAdColor("已架設")],
+        ["待拆除", smallAdColor("待拆除")],
+        ["已拆除", smallAdColor("已拆除")],
+        ["遺失/需修正", smallAdColor("遺失")]
+      ]);
+    }
+
+    function refreshVehicleMap() {
+      const layer = mapLayers.vehicleMap;
+      layer.clearLayers();
+      vehiclePoints().forEach((point) => addRawPointMarker(layer, point, point.color || COLOR.green));
+    }
+
+    function addMarker(layer, item, kind, color) {
+      const marker = L.marker([Number(item.lat), Number(item.lng)], {
+        icon: L.divIcon({
+          className: "custom-pin",
+          html: `<span class="map-pin" style="--pin:${color}"></span>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 22]
+        })
+      });
+      marker.bindPopup(pinPopup(item, kind));
+      marker.addTo(layer);
+    }
+
+    function addRawPointMarker(layer, point, color) {
+      if (!point.lat || !point.lng) return;
+      const marker = L.marker([Number(point.lat), Number(point.lng)], {
+        icon: L.divIcon({
+          className: "custom-pin",
+          html: `<span class="map-pin" style="--pin:${color}"></span>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 22]
+        })
+      });
+      const text = rawPointInfo(point);
+      marker.bindPopup(`
+        <div class="pin-popup">
+          <strong>${escapeHtml(point.title || "定位點")}</strong>
+          <dl>
+            <dt>類型</dt><dd>${escapeHtml(point.type || "")}</dd>
+            <dt>日期</dt><dd>${escapeHtml(point.date || "")}</dd>
+            <dt>經緯度</dt><dd>${escapeHtml(point.lat)}, ${escapeHtml(point.lng)}</dd>
+          </dl>
+          <div class="popup-actions">
+            <button type="button" data-action="copy-raw" data-text="${encodeAttr(text)}">複製資訊</button>
+            <a class="button ghost" href="${googleMapsUrl(point.lat, point.lng)}" target="_blank" rel="noopener">Google 地圖</a>
+          </div>
+        </div>
+      `);
+      marker.addTo(layer);
+    }
+
+    function pinPopup(item, kind) {
+      if (kind === "billboard") {
+        return `
+          <div class="pin-popup">
+            <strong>${escapeHtml(item.name || item.code || "未命名看板")}</strong>
+            <dl>
+              <dt>地址</dt><dd>${escapeHtml(item.address || "")}</dd>
+              <dt>類型</dt><dd>${escapeHtml(item.type || "")}</dd>
+              <dt>主題</dt><dd>${escapeHtml(item.theme || "")}</dd>
+              <dt>狀態</dt><dd>${escapeHtml(item.status || "")}</dd>
+              <dt>尺寸</dt><dd>${escapeHtml(item.size || "")}</dd>
+              <dt>月租</dt><dd>${formatMoney(item.monthlyRent)}</dd>
+              <dt>租期</dt><dd>${escapeHtml(item.leaseMonths || "")}</dd>
+              <dt>租借費用</dt><dd>${formatMoney(item.leaseCost)}</dd>
+              <dt>上架日期</dt><dd>${escapeHtml(item.installedDate || "")}</dd>
+            </dl>
+            <div class="popup-actions">
+              <button type="button" data-action="edit-billboard" data-id="${item.id}">查看詳情</button>
+              <button type="button" data-action="copy-pin" data-kind="billboard" data-id="${item.id}">複製位置</button>
+              <a class="button ghost" href="${googleMapsUrl(item.lat, item.lng)}" target="_blank" rel="noopener">Google 地圖</a>
+            </div>
+          </div>
+        `;
+      }
+      const image = item.installPhoto ? `<img class="thumb" alt="設置照片" src="${item.installPhoto}">` : "";
+      return `
+        <div class="pin-popup">
+          <strong>${escapeHtml(item.code || item.type || "小型廣告點位")}</strong>
+          ${image}
+          <dl>
+            <dt>類型</dt><dd>${escapeHtml(item.type || "")}</dd>
+            <dt>預計版本</dt><dd>${escapeHtml(item.plannedVersion || "")}</dd>
+            <dt>實際版本</dt><dd>${escapeHtml(item.actualVersion || "")}</dd>
+            <dt>位置</dt><dd>${escapeHtml(item.address || "")}</dd>
+            <dt>狀態</dt><dd>${escapeHtml(item.status || "")}</dd>
+          </dl>
+          <div class="popup-actions">
+            <button type="button" data-action="edit-small" data-id="${item.id}">查看詳情</button>
+            <button type="button" data-action="copy-pin" data-kind="smallAd" data-id="${item.id}">複製位置</button>
+            <a class="button ghost" href="${googleMapsUrl(item.lat, item.lng)}" target="_blank" rel="noopener">Google 地圖</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLegend(id, items) {
+      const target = $("#" + id);
+      target.innerHTML = items.map(([label, color]) => `<span><i class="dot" style="--dot:${color}"></i>${escapeHtml(label)}</span>`).join("");
+    }
+
+    function saveBillboard(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const data = collectForm(form, ["agreed", "freeUse", "hasContract", "receiptNeeded", "receiptIssued"]);
+      data.code = data.code || nextCode("KB", state.billboards.length + 1);
+      data.leaseCost = valueOrCalculatedLease(data);
+      if (!data.receiptAmount && data.leaseCost) data.receiptAmount = data.leaseCost;
+      upsert("billboards", data);
+      resetBillboardForm();
+      saveState("看板資料已儲存");
+    }
+
+    function saveVehicle(event) {
+      event.preventDefault();
+      const data = collectForm(event.currentTarget);
+      data.code = data.code || nextCode("CAR", state.vehicles.length + 1);
+      upsert("vehicles", data);
+      resetForm("vehicleForm", renderVehicleImages);
+      refreshShiftSelectors();
+      saveState("車輛資料已儲存");
+    }
+
+    function saveDriver(event) {
+      event.preventDefault();
+      const data = collectForm(event.currentTarget, ["selfVehicle"]);
+      data.code = data.code || nextCode("DRV", state.drivers.length + 1);
+      upsert("drivers", data);
+      resetForm("driverForm");
+      refreshShiftSelectors();
+      saveState("司機資料已儲存");
+    }
+
+    function saveShift(event) {
+      event.preventDefault();
+      const data = collectForm(event.currentTarget);
+      data.code = data.code || nextCode("SHIFT", state.vehicleShifts.length + 1);
+      data.date = data.date || todayString();
+      data.stops = safeJson(data.stopsJson, []);
+      delete data.stopsJson;
+      upsert("vehicleShifts", data);
+      updateVehicleDriverByShift(data);
+      resetShiftForm();
+      saveState("出車紀錄已儲存");
+    }
+
+    function saveSmallAd(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const data = collectForm(form, ["installed", "needRemoval", "cleared"]);
+      const customType = $("#smallAdCustomTypeInput").value.trim();
+      if (customType) {
+        data.type = customType;
+        if (!state.settings.smallAdTypes.includes(customType)) state.settings.smallAdTypes.push(customType);
+        setupSelects();
+      }
+      data.code = data.code || nextCode("SM", state.smallAds.length + 1);
+      upsert("smallAds", data);
+      resetSmallAdForm();
+      saveState("小型廣告點位已儲存");
+    }
+
+    function saveVendor(event) {
+      event.preventDefault();
+      const data = collectForm(event.currentTarget);
+      upsert("vendors", data);
+      resetForm("vendorForm");
+      saveState("廠商資料已儲存");
+    }
+
+    function collectForm(form, checkboxNames = []) {
+      const formData = new FormData(form);
+      const data = {};
+      for (const [key, value] of formData.entries()) data[key] = typeof value === "string" ? value.trim() : value;
+      checkboxNames.forEach((name) => {
+        data[name] = Boolean(form.elements[name] && form.elements[name].checked);
+      });
+      data.id = data.id || crypto.randomUUID();
+      data.updatedAt = new Date().toISOString();
+      if (!data.createdAt) {
+        const existing = findExisting(form.id, data.id);
+        data.createdAt = existing && existing.createdAt ? existing.createdAt : data.updatedAt;
+      }
+      return data;
+    }
+
+    function findExisting(formId, id) {
+      const table = {
+        billboardForm: "billboards",
+        vehicleForm: "vehicles",
+        driverForm: "drivers",
+        shiftForm: "vehicleShifts",
+        smallAdForm: "smallAds",
+        vendorForm: "vendors"
+      }[formId];
+      return table ? state[table].find((item) => item.id === id) : null;
+    }
+
+    function upsert(table, item) {
+      const index = state[table].findIndex((row) => row.id === item.id);
+      if (index >= 0) state[table][index] = { ...state[table][index], ...item };
+      else state[table].push(item);
+      pendingCloudMutation = { type: "upsert", table, item: { ...item } };
+    }
+
+    function setFormValues(formId, item, checkboxNames = []) {
+      const form = $("#" + formId);
+      form.reset();
+      Object.entries(item || {}).forEach(([key, value]) => {
+        if (!form.elements[key]) return;
+        if (checkboxNames.includes(key)) form.elements[key].checked = Boolean(value);
+        else if (typeof value !== "object") form.elements[key].value = value ?? "";
+      });
+      if (formId === "shiftForm") {
+        currentStops = Array.isArray(item.stops) ? item.stops : [];
+        form.elements.stopsJson.value = JSON.stringify(currentStops);
+        renderStopList();
+      }
+      if (formId === "billboardForm") renderBillboardImages();
+      if (formId === "vehicleForm") renderVehicleImages();
+      if (formId === "smallAdForm") renderSmallImages();
+      form.scrollIntoView({ behavior: "smooth", block: "start" });
+      refreshIcons();
+    }
+
+    function resetForm(formId, afterReset) {
+      const form = $("#" + formId);
+      form.reset();
+      if (form.elements.id) form.elements.id.value = "";
+      $$("input[type=file]", form).forEach((input) => input.value = "");
+      if (afterReset) afterReset();
+    }
+
+    function resetBillboardForm() {
+      resetForm("billboardForm", renderBillboardImages);
+      $("#billboardForm").elements.town.value = "鹿港鎮";
+      $("#billboardForm").dataset.leaseManual = "";
+    }
+
+    function resetSmallAdForm() {
+      resetForm("smallAdForm", renderSmallImages);
+      $("#smallAdForm").elements.town.value = "鹿港鎮";
+      $("#smallAdCustomTypeInput").value = "";
+    }
+
+    function resetShiftForm() {
+      resetForm("shiftForm");
+      currentStops = [];
+      $("#shiftForm").elements.stopsJson.value = "[]";
+      $("#shiftForm").elements.date.value = todayString();
+      renderStopList();
+    }
+
+    function clearVisibleForm() {
+      const view = $(".view.active");
+      const form = $("form", view);
+      if (!form) return;
+      if (form.id === "billboardForm") resetBillboardForm();
+      else if (form.id === "smallAdForm") resetSmallAdForm();
+      else if (form.id === "shiftForm") resetShiftForm();
+      else resetForm(form.id);
+      showToast("目前頁面的表單已清空");
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderBillboards();
+      renderVehicles();
+      renderSmallAds();
+      renderVendors();
+      renderSearchResults();
+      renderAnalytics();
+      refreshShiftSelectors();
+      refreshIcons();
+    }
+
+    function renderDashboard() {
+      const billboardTotal = state.billboards.length;
+      const billboardInstalled = countBy(state.billboards, "status", "已上架");
+      const billboardPending = countBy(state.billboards, "status", "待施工");
+      const billboardContacting = countBy(state.billboards, "status", "接洽中");
+      const vehicleTotal = state.vehicles.length;
+      const todayShifts = state.vehicleShifts.filter((shift) => shift.date === todayString());
+      const todayVehicleIds = new Set(todayShifts.map((shift) => shift.vehicleId).filter(Boolean));
+      const smallTotal = state.smallAds.length;
+      const smallInstalled = state.smallAds.filter((item) => item.installed || item.status === "已架設").length;
+      const smallPending = countBy(state.smallAds, "status", "待架設");
+      const smallRemoval = state.smallAds.filter((item) => item.needRemoval || item.status === "待拆除").length;
+      const smallRemoved = countBy(state.smallAds, "status", "已拆除");
+      const metrics = [
+        ["大型看板總數", billboardTotal],
+        ["大型看板已上架數", billboardInstalled],
+        ["大型看板待施工數", billboardPending],
+        ["大型看板接洽中數", billboardContacting],
+        ["廣告車總數", vehicleTotal],
+        ["今日出車數", todayShifts.length],
+        ["今日未出車數", Math.max(vehicleTotal - todayVehicleIds.size, 0)],
+        ["出車中車輛數", countBy(state.vehicles, "status", "出車中")],
+        ["維修中車輛數", countBy(state.vehicles, "status", "維修中")],
+        ["旗幟與小板總數", smallTotal],
+        ["已架設數", smallInstalled],
+        ["待架設數", smallPending],
+        ["待拆除數", smallRemoval],
+        ["已拆除數", smallRemoved]
+      ];
+      $("#dashboardMetrics").innerHTML = metrics.map(metricCard).join("");
+
+      const costs = calculateCosts();
+      $("#costMetrics").innerHTML = [
+        ["總租借費用", formatMoney(costs.lease)],
+        ["總輸出費用", formatMoney(costs.output)],
+        ["總施工費用", formatMoney(costs.construction)],
+        ["車輛費用估算", formatMoney(costs.vehicle)],
+        ["司機費用估算", formatMoney(costs.driver)],
+        ["總預估成本", formatMoney(costs.total)]
+      ].map(([label, value]) => metricCard([label, value], "cost")).join("");
+
+      const today = todayString();
+      $("#todayLabel").textContent = today;
+      renderMiniList("todayTasks", collectTodayItems(), "今天沒有待處理事項。");
+      const weekItems = collectWeekItems();
+      renderMiniList("weekItems", weekItems, "本週暫無待處理事項。");
+      renderMiniList("receiptList", receiptPendingItems(), "目前沒有尚未開立的收據 / 領據。");
+      renderMiniList("constructionList", constructionPendingItems(), "目前沒有待施工看板。");
+      renderMiniList("removalList", removalPendingItems(), "目前沒有待拆除項目。");
+    }
+
+    function renderBillboards() {
+      const keyword = $("#billboardSearchInput").value.trim();
+      const status = $("#billboardStatusFilter").value;
+      const type = $("#billboardTypeFilter").value;
+      const payment = $("#billboardPaymentFilter").value;
+      const items = state.billboards
+        .filter((item) => !keyword || includesText(item, keyword))
+        .filter((item) => !status || item.status === status)
+        .filter((item) => !type || item.type === type)
+        .filter((item) => !payment || item.paymentStatus === payment)
+        .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+      $("#billboardList").innerHTML = items.length ? items.map(billboardCard).join("") : empty("尚未建立看板資料。");
+    }
+
+    function billboardCard(item) {
+      const badges = [
+        badge(item.status, statusBadgeClass(item.status)),
+        badge(item.type),
+        item.receiptNeeded && !item.receiptIssued ? badge("待開立收據", "gold") : "",
+        item.freeUse ? badge("免費提供", "green") : ""
+      ].join("");
+      return `
+        <article class="card" style="border-left-color:${billboardColor(item.status)}">
+          <div class="card-head">
+            <div class="card-title">
+              <strong>${escapeHtml(item.name || item.code || "未命名看板")}</strong>
+              <span>${escapeHtml(item.code || "")}｜${escapeHtml(item.address || "")}</span>
+            </div>
+            <div class="badge-row">${badges}</div>
+          </div>
+          <dl>
+            <dt>尺寸</dt><dd>${escapeHtml(item.size || "-")}</dd>
+            <dt>主題</dt><dd>${escapeHtml([item.theme, item.themeNote].filter(Boolean).join("｜") || "-")}</dd>
+            <dt>月租 / 租期</dt><dd>${formatMoney(item.monthlyRent)} / ${escapeHtml(item.leaseMonths || "0")} 月</dd>
+            <dt>租借費用</dt><dd>${formatMoney(item.leaseCost)}</dd>
+            <dt>施工狀態</dt><dd>${escapeHtml(item.constructionStatus || "-")}</dd>
+            <dt>預定拆除</dt><dd>${escapeHtml(item.removalScheduledDate || "-")}</dd>
+          </dl>
+          ${imageStrip([item.sitePhoto, item.designImage])}
+          <div class="button-row">
+            <button class="compact" data-action="edit-billboard" data-id="${item.id}" type="button"><i data-lucide="pencil"></i>編修</button>
+            <button class="ghost compact" data-action="copy-pin" data-kind="billboard" data-id="${item.id}" type="button"><i data-lucide="copy"></i>複製圖釘</button>
+            <a class="button ghost compact" href="${googleMapsUrl(item.lat, item.lng)}" target="_blank" rel="noopener"><i data-lucide="map"></i>Google</a>
+            <button class="danger compact" data-action="delete" data-table="billboards" data-id="${item.id}" type="button"><i data-lucide="trash-2"></i>刪除</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderVehicles() {
+      const today = todayString();
+      const todayShifts = state.vehicleShifts.filter((shift) => shift.date === today);
+      const todayDrivers = new Set(todayShifts.map((shift) => shift.driverId).filter(Boolean)).size;
+      const costs = calculateCosts();
+      const metrics = [
+        ["今日出車數", todayShifts.length],
+        ["今日未出車數", Math.max(state.vehicles.length - new Set(todayShifts.map((shift) => shift.vehicleId)).size, 0)],
+        ["可派車輛數", countBy(state.vehicles, "status", "可派車")],
+        ["出車中車輛數", countBy(state.vehicles, "status", "出車中")],
+        ["維修中車輛數", countBy(state.vehicles, "status", "維修中")],
+        ["今日司機人數", todayDrivers],
+        ["本週出車次數", shiftsThisWeek().length],
+        ["司機工資估算", formatMoney(costs.driver)],
+        ["油資估算", formatMoney(costs.fuel)]
+      ];
+      $("#vehicleMetrics").innerHTML = metrics.map(metricCard).join("");
+      $("#vehicleList").innerHTML = state.vehicles.length ? state.vehicles.map(vehicleCard).join("") : empty("尚未建立車輛。");
+      $("#driverList").innerHTML = state.drivers.length ? state.drivers.map(driverCard).join("") : empty("尚未建立司機。");
+      $("#shiftList").innerHTML = state.vehicleShifts.length ? [...state.vehicleShifts].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map(shiftCard).join("") : empty("尚未建立出車紀錄。");
+    }
+
+    function vehicleCard(item) {
+      return `
+        <article class="card">
+          <div class="card-head"><div class="card-title"><strong>${escapeHtml(item.plate || item.code || "未命名車輛")}</strong><span>${escapeHtml(item.type || "")}｜${escapeHtml(item.model || "")}</span></div><div class="badge-row">${badge(item.status, statusBadgeClass(item.status))}</div></div>
+          <dl><dt>車主</dt><dd>${escapeHtml(item.ownerName || "-")}</dd><dt>每日費用</dt><dd>${formatMoney(item.dailyCost)}</dd><dt>油資補貼</dt><dd>${formatMoney(item.fuelSubsidy)}</dd><dt>設計主題</dt><dd>${escapeHtml(item.designTheme || "-")}</dd></dl>
+          ${imageStrip([item.designImage1, item.designImage2, item.designImage3])}
+          <div class="button-row">
+            <button class="compact" data-action="edit-vehicle" data-id="${item.id}" type="button"><i data-lucide="pencil"></i>編修</button>
+            <button class="danger compact" data-action="delete" data-table="vehicles" data-id="${item.id}" type="button"><i data-lucide="trash-2"></i>刪除</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function driverCard(item) {
+      return `
+        <article class="card">
+          <div class="card-head"><div class="card-title"><strong>${escapeHtml(item.name || item.code || "未命名司機")}</strong><span>${escapeHtml(item.phone || "")}</span></div><div class="badge-row">${badge(item.status, statusBadgeClass(item.status))}</div></div>
+          <dl><dt>可駕車型</dt><dd>${escapeHtml(item.vehicleTypes || "-")}</dd><dt>自備車輛</dt><dd>${item.selfVehicle ? "是" : "否"}</dd><dt>日薪 / 車趟費</dt><dd>${formatMoney(item.dayWage)}</dd><dt>地址</dt><dd>${escapeHtml(item.address || "-")}</dd></dl>
+          <div class="button-row">
+            <button class="compact" data-action="edit-driver" data-id="${item.id}" type="button"><i data-lucide="pencil"></i>編修</button>
+            <button class="danger compact" data-action="delete" data-table="drivers" data-id="${item.id}" type="button"><i data-lucide="trash-2"></i>刪除</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function shiftCard(item) {
+      const vehicle = getById("vehicles", item.vehicleId);
+      const driver = getById("drivers", item.driverId);
+      return `
+        <article class="card">
+          <div class="card-head"><div class="card-title"><strong>${escapeHtml(item.date || "")} ${escapeHtml(item.code || "")}</strong><span>${escapeHtml(vehicleLabel(vehicle))}｜${escapeHtml(driver ? driver.name : "")}</span></div><div class="badge-row">${badge(item.promoType || "出車")}</div></div>
+          <dl><dt>負責區域</dt><dd>${escapeHtml(item.area || "-")}</dd><dt>行駛時數</dt><dd>${escapeHtml(item.hours || "0")}</dd><dt>上班定位</dt><dd>${latLngText(item.clockInLat, item.clockInLng)}</dd><dt>下班定位</dt><dd>${latLngText(item.clockOutLat, item.clockOutLng)}</dd><dt>停靠點</dt><dd>${Array.isArray(item.stops) ? item.stops.length : 0} 個</dd><dt>油資</dt><dd>${formatMoney(item.fuelCost)}</dd></dl>
+          <div class="button-row">
+            <button class="compact" data-action="edit-shift" data-id="${item.id}" type="button"><i data-lucide="pencil"></i>編修</button>
+            <button class="ghost compact" data-action="copy-raw" data-text="${encodeAttr(shiftInfo(item))}" type="button"><i data-lucide="copy"></i>複製出車資訊</button>
+            <button class="danger compact" data-action="delete" data-table="vehicleShifts" data-id="${item.id}" type="button"><i data-lucide="trash-2"></i>刪除</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderSmallAds() {
+      const keyword = $("#smallSearchInput").value.trim();
+      const status = $("#smallStatusFilter").value;
+      const type = $("#smallTypeFilter").value;
+      const removal = $("#smallRemovalFilter").value;
+      const items = state.smallAds
+        .filter((item) => !keyword || includesText(item, keyword))
+        .filter((item) => !status || item.status === status)
+        .filter((item) => !type || item.type === type)
+        .filter((item) => !removal || (removal === "yes" ? item.needRemoval : !item.needRemoval))
+        .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+      $("#smallAdList").innerHTML = items.length ? items.map(smallAdCard).join("") : empty("尚未建立旗幟或小型廣告板點位。");
+      const removalItems = state.smallAds.filter((item) => (item.needRemoval || item.status === "待拆除") && item.status !== "已拆除");
+      $("#smallRemovalList").innerHTML = removalItems.length ? removalItems.map(smallRemovalCard).join("") : empty("目前沒有待拆除點位。");
+    }
+
+    function smallAdCard(item) {
+      return `
+        <article class="card" style="border-left-color:${smallAdColor(item.status)}">
+          <div class="card-head">
+            <div class="card-title"><strong>${escapeHtml(item.code || item.type || "未命名點位")}</strong><span>${escapeHtml(item.address || "")}</span></div>
+            <div class="badge-row">${badge(item.status, statusBadgeClass(item.status))}${badge(item.type || "")}${item.needRemoval ? badge("需拆除", "gold") : ""}</div>
+          </div>
+          <dl><dt>預計版本</dt><dd>${escapeHtml(item.plannedVersion || "-")}</dd><dt>實際版本</dt><dd>${escapeHtml(item.actualVersion || "-")}</dd><dt>設置日期</dt><dd>${escapeHtml(item.installDate || "-")}</dd><dt>拆除日</dt><dd>${escapeHtml(item.removalDate || item.removalScheduledDate || "-")}</dd><dt>經緯度</dt><dd>${latLngText(item.lat, item.lng)}</dd><dt>完全清除</dt><dd>${item.cleared ? "是" : "否"}</dd></dl>
+          ${imageStrip([item.installPhoto, item.designImage, item.removalPhoto])}
+          <div class="button-row">
+            <button class="compact" data-action="edit-small" data-id="${item.id}" type="button"><i data-lucide="pencil"></i>編修</button>
+            <button class="ghost compact" data-action="copy-pin" data-kind="smallAd" data-id="${item.id}" type="button"><i data-lucide="copy"></i>複製位置</button>
+            <a class="button ghost compact" href="${googleMapsUrl(item.lat, item.lng)}" target="_blank" rel="noopener"><i data-lucide="map"></i>Google</a>
+            <button class="danger compact" data-action="delete" data-table="smallAds" data-id="${item.id}" type="button"><i data-lucide="trash-2"></i>刪除</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function smallRemovalCard(item) {
+      return `
+        <article class="card" style="border-left-color:${smallAdColor("待拆除")}">
+          <div class="card-head"><div class="card-title"><strong>${escapeHtml(item.code || item.type || "待拆除點位")}</strong><span>${escapeHtml(item.address || "")}</span></div><div class="badge-row">${badge("待拆除", "gold")}</div></div>
+          <dl><dt>預計拆除日</dt><dd>${escapeHtml(item.removalScheduledDate || "-")}</dd><dt>拆除人員</dt><dd>${escapeHtml(item.remover || "-")}</dd><dt>定位</dt><dd>${latLngText(item.lat, item.lng)}</dd><dt>版本</dt><dd>${escapeHtml(item.actualVersion || item.plannedVersion || "-")}</dd></dl>
+          <div class="button-row">
+            <button class="compact" data-action="mark-small-removed" data-id="${item.id}" type="button"><i data-lucide="check"></i>拆除完成</button>
+            <button class="ghost compact" data-action="edit-small" data-id="${item.id}" type="button"><i data-lucide="pencil"></i>填寫照片</button>
+            <a class="button ghost compact" href="${googleMapsUrl(item.lat, item.lng)}" target="_blank" rel="noopener"><i data-lucide="map"></i>Google</a>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderVendors() {
+      $("#vendorList").innerHTML = state.vendors.length ? state.vendors.map((item) => `
+        <article class="card">
+          <div class="card-head"><div class="card-title"><strong>${escapeHtml(item.name || "未命名廠商")}</strong><span>${escapeHtml(item.type || "")}｜${escapeHtml(item.contact || "")} ${escapeHtml(item.phone || "")}</span></div></div>
+          <dl><dt>服務項目</dt><dd>${escapeHtml(item.services || "-")}</dd><dt>備註</dt><dd>${escapeHtml(item.note || "-")}</dd></dl>
+          <div class="button-row"><button class="compact" data-action="edit-vendor" data-id="${item.id}" type="button"><i data-lucide="pencil"></i>編修</button><button class="danger compact" data-action="delete" data-table="vendors" data-id="${item.id}" type="button"><i data-lucide="trash-2"></i>刪除</button></div>
+        </article>
+      `).join("") : empty("尚未建立廠商資料。");
+    }
+
+    function renderSearchResults() {
+      const items = buildSearchIndex().filter(matchGlobalFilters);
+      $("#searchResultCount").textContent = `${items.length} 筆資料`;
+      $("#globalSearchResults").innerHTML = items.length ? items.map((item) => `
+        <article class="card">
+          <div class="card-head"><div class="card-title"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.category)}｜${escapeHtml(item.subtitle || "")}</span></div><div class="badge-row">${item.status ? badge(item.status, statusBadgeClass(item.status)) : ""}${item.type ? badge(item.type) : ""}</div></div>
+          <dl><dt>位置 / 關聯</dt><dd>${escapeHtml(item.location || "-")}</dd><dt>日期</dt><dd>${escapeHtml(item.date || "-")}</dd><dt>摘要</dt><dd>${escapeHtml(item.text.slice(0, 150))}</dd></dl>
+          <div class="button-row">${item.action ? `<button class="compact" data-action="${item.action}" data-id="${item.id}" type="button"><i data-lucide="pencil"></i>查看</button>` : ""}</div>
+        </article>
+      `).join("") : empty("沒有符合條件的資料。");
+    }
+
+    function renderAnalytics() {
+      const costs = calculateCosts();
+      $("#analyticsMetrics").innerHTML = [
+        ["看板平均租借費", formatMoney(state.billboards.length ? costs.lease / state.billboards.length : 0)],
+        ["需收據 / 領據", state.billboards.filter((item) => item.receiptNeeded).length],
+        ["未開立收據", receiptPendingItems().length],
+        ["待拆除小型廣告", state.smallAds.filter((item) => item.needRemoval || item.status === "待拆除").length],
+        ["本週出車次數", shiftsThisWeek().length],
+        ["總預估成本", formatMoney(costs.total)]
+      ].map((item) => metricCard(item, "cost")).join("");
+
+      $("#statusSummaryTable").innerHTML = makeTable(["類別", "狀態", "數量"], [
+        ...summaryRows("大型看板", state.billboards, "status"),
+        ...summaryRows("旗幟與小板", state.smallAds, "status")
+      ]);
+      $("#vehicleSummaryTable").innerHTML = makeTable(["項目", "數值", "備註"], [
+        ["車輛總數", state.vehicles.length, ""],
+        ["可派車", countBy(state.vehicles, "status", "可派車"), ""],
+        ["出車中", countBy(state.vehicles, "status", "出車中"), ""],
+        ["維修中", countBy(state.vehicles, "status", "維修中"), ""],
+        ["司機總數", state.drivers.length, ""],
+        ["可排班司機", countBy(state.drivers, "status", "可排班"), ""],
+        ["本週出車", shiftsThisWeek().length, "依日期欄位計算"],
+        ["油資估算", formatMoney(costs.fuel), "出車紀錄油資加總"]
+      ]);
+    }
+
+    function handleActionClick(event) {
+      const target = event.target.closest("[data-action]");
+      if (!target) return;
+      const action = target.dataset.action;
+      const id = target.dataset.id;
+      if (action === "copy-pin") copyPin(target.dataset.kind, id);
+      if (action === "copy-raw") copyText(decodeAttr(target.dataset.text || ""));
+      if (action === "edit-billboard") editItem("billboards", id, "billboardForm", ["agreed", "freeUse", "hasContract", "receiptNeeded", "receiptIssued"], "billboards");
+      if (action === "edit-vehicle") editItem("vehicles", id, "vehicleForm", [], "vehicles");
+      if (action === "edit-driver") editItem("drivers", id, "driverForm", ["selfVehicle"], "vehicles");
+      if (action === "edit-shift") editItem("vehicleShifts", id, "shiftForm", [], "vehicles");
+      if (action === "edit-small") editItem("smallAds", id, "smallAdForm", ["installed", "needRemoval", "cleared"], "smallAds");
+      if (action === "edit-vendor") editItem("vendors", id, "vendorForm", [], "vendors");
+      if (action === "delete") deleteItem(target.dataset.table, id);
+      if (action === "mark-small-removed") markSmallRemoved(id);
+    }
+
+    function editItem(table, id, formId, checkboxNames, viewId) {
+      const item = getById(table, id);
+      if (!item) return;
+      switchView(viewId);
+      setFormValues(formId, item, checkboxNames);
+    }
+
+    function deleteItem(table, id) {
+      if (!confirm("確定要刪除這筆資料嗎？")) return;
+      state[table] = state[table].filter((item) => item.id !== id);
+      pendingCloudMutation = { type: "delete", table, id };
+      saveState("資料已刪除");
+    }
+
+    function markSmallRemoved(id) {
+      const item = getById("smallAds", id);
+      if (!item) return;
+      item.status = "已拆除";
+      item.needRemoval = false;
+      item.removalDate = item.removalDate || todayString();
+      item.cleared = true;
+      item.updatedAt = new Date().toISOString();
+      pendingCloudMutation = { type: "upsert", table: "smallAds", item: { ...item } };
+      saveState("已標記為拆除完成");
+    }
+
+    function recalculateLeaseCost() {
+      const form = $("#billboardForm");
+      const amount = parseNumber(form.elements.monthlyRent.value) * parseNumber(form.elements.leaseMonths.value);
+      form.elements.leaseCost.value = amount || "";
+      form.elements.receiptAmount.value = form.elements.receiptAmount.value || amount || "";
+      form.dataset.leaseManual = "";
+      showToast("已重新計算租借費用");
+    }
+
+    function autoLeaseCost() {
+      const form = $("#billboardForm");
+      if (form.dataset.leaseManual === "1" && form.elements.leaseCost.value) return;
+      const amount = parseNumber(form.elements.monthlyRent.value) * parseNumber(form.elements.leaseMonths.value);
+      form.elements.leaseCost.value = amount || "";
+      if (!form.elements.receiptAmount.value) form.elements.receiptAmount.value = amount || "";
+    }
+
+    function valueOrCalculatedLease(data) {
+      const manual = parseNumber(data.leaseCost);
+      if (manual) return manual;
+      return parseNumber(data.monthlyRent) * parseNumber(data.leaseMonths);
+    }
+
+    function setLatLngToForm(formId, latlng) {
+      const form = $("#" + formId);
+      form.elements.lat.value = latlng.lat.toFixed(6);
+      form.elements.lng.value = latlng.lng.toFixed(6);
+    }
+
+    function clockShift(direction) {
+      const form = $("#shiftForm");
+      if (!form.elements.vehicleId.value || !form.elements.driverId.value) {
+        showToast("請先選擇車輛與司機。");
+        return;
+      }
+      getCurrentPosition().then((pos) => {
+        const now = localDateTimeValue(new Date());
+        if (direction === "in") {
+          form.elements.clockInTime.value = now;
+          form.elements.clockInLat.value = pos.lat;
+          form.elements.clockInLng.value = pos.lng;
+        } else {
+          form.elements.clockOutTime.value = now;
+          form.elements.clockOutLat.value = pos.lat;
+          form.elements.clockOutLng.value = pos.lng;
+          if (form.elements.clockInTime.value) {
+            form.elements.hours.value = hoursBetween(form.elements.clockInTime.value, now);
+          }
+        }
+        showToast(direction === "in" ? "上班打卡定位已記錄" : "下班打卡定位已記錄");
+      }).catch((error) => {
+        showToast(error.message || "定位失敗，請確認瀏覽器定位權限。");
+      });
+    }
+
+    function locateStop() {
+      getCurrentPosition().then((pos) => {
+        $("#stopLatInput").value = pos.lat;
+        $("#stopLngInput").value = pos.lng;
+        $("#stopTimeInput").value = $("#stopTimeInput").value || localDateTimeValue(new Date());
+        showToast("已帶入目前定位");
+      }).catch((error) => showToast(error.message || "定位失敗"));
+    }
+
+    function addStopFromInputs() {
+      const stop = {
+        id: crypto.randomUUID(),
+        name: $("#stopNameInput").value.trim() || "手動停靠點",
+        time: $("#stopTimeInput").value || localDateTimeValue(new Date()),
+        lng: $("#stopLngInput").value,
+        lat: $("#stopLatInput").value,
+        note: $("#stopNoteInput").value.trim()
+      };
+      if (!stop.lat || !stop.lng) {
+        showToast("請先輸入或點選地圖帶入停靠點經緯度。");
+        return;
+      }
+      currentStops.push(stop);
+      $("#shiftForm").elements.stopsJson.value = JSON.stringify(currentStops);
+      $("#stopNameInput").value = "";
+      $("#stopLngInput").value = "";
+      $("#stopLatInput").value = "";
+      $("#stopNoteInput").value = "";
+      renderStopList();
+      showToast("停靠點已加入，記得儲存出車紀錄。");
+    }
+
+    function renderStopList() {
+      const list = $("#stopList");
+      list.innerHTML = currentStops.length ? currentStops.map((stop) => `
+        <article class="card">
+          <div class="card-head"><div class="card-title"><strong>${escapeHtml(stop.name)}</strong><span>${escapeHtml(stop.time || "")}</span></div></div>
+          <dl><dt>經緯度</dt><dd>${latLngText(stop.lat, stop.lng)}</dd><dt>備註</dt><dd>${escapeHtml(stop.note || "-")}</dd></dl>
+          <div class="button-row"><button class="danger compact" data-action="remove-stop" data-id="${stop.id}" type="button"><i data-lucide="trash-2"></i>移除</button></div>
+        </article>
+      `).join("") : empty("尚未新增停靠點。");
+      $$('[data-action="remove-stop"]', list).forEach((button) => {
+        button.addEventListener("click", () => {
+          currentStops = currentStops.filter((stop) => stop.id !== button.dataset.id);
+          $("#shiftForm").elements.stopsJson.value = JSON.stringify(currentStops);
+          renderStopList();
+        });
+      });
+      refreshIcons();
+    }
+
+    function getCurrentPosition() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("此瀏覽器不支援定位。"));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (position) => resolve({
+            lat: position.coords.latitude.toFixed(6),
+            lng: position.coords.longitude.toFixed(6)
+          }),
+          () => reject(new Error("定位需要使用者授權，請允許瀏覽器取得目前位置。")),
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
+        );
+      });
+    }
+
+    function renderBillboardImages() {
+      const form = $("#billboardForm");
+      $("#billboardImagePreview").innerHTML = imageStrip([form.elements.siteSketch.value, form.elements.sitePhoto.value, form.elements.streetView.value], true);
+      $("#billboardDesignPreview").innerHTML = imageStrip([form.elements.designImage.value], true);
+    }
+
+    function renderVehicleImages() {
+      const form = $("#vehicleForm");
+      $("#vehicleImagesPreview").innerHTML = imageStrip([1, 2, 3, 4, 5].map((i) => form.elements[`designImage${i}`].value), true);
+    }
+
+    function renderSmallImages() {
+      const form = $("#smallAdForm");
+      $("#smallImagesPreview").innerHTML = imageStrip([form.elements.designImage.value, form.elements.installPhoto.value, form.elements.removalPhoto.value], true);
+    }
+
+    function refreshShiftSelectors() {
+      const vehicleSelect = $("#shiftVehicleSelect");
+      const driverSelect = $("#shiftDriverSelect");
+      if (!vehicleSelect || !driverSelect) return;
+      const currentVehicle = vehicleSelect.value;
+      const currentDriver = driverSelect.value;
+      vehicleSelect.innerHTML = `<option value="">請選擇車輛</option>` + state.vehicles.map((item) => `<option value="${item.id}">${escapeHtml(vehicleLabel(item))}</option>`).join("");
+      driverSelect.innerHTML = `<option value="">請選擇司機</option>` + state.drivers.map((item) => `<option value="${item.id}">${escapeHtml(item.name || item.code)}</option>`).join("");
+      vehicleSelect.value = currentVehicle;
+      driverSelect.value = currentDriver;
+    }
+
+    function updateVehicleDriverByShift(shift) {
+      const vehicle = getById("vehicles", shift.vehicleId);
+      const driver = getById("drivers", shift.driverId);
+      if (vehicle && shift.date === todayString()) vehicle.status = shift.clockOutTime ? "休息中" : "出車中";
+      if (driver && shift.date === todayString()) driver.status = shift.clockOutTime ? "可排班" : "已排班";
+    }
+
+    function copyPin(kind, id) {
+      const table = kind === "billboard" ? "billboards" : "smallAds";
+      const item = getById(table, id);
+      if (!item) return;
+      copyText(pinInfo(kind, item));
+    }
+
+    function copyAllBillboardPins() {
+      const text = state.billboards.filter(hasLatLng).map((item) => pinInfo("billboard", item)).join("\n\n");
+      copyText(text || "目前沒有看板圖釘。");
+    }
+
+    function copyAllSmallPins() {
+      const text = state.smallAds.filter(hasLatLng).map((item) => pinInfo("smallAd", item)).join("\n\n");
+      copyText(text || "目前沒有小型廣告圖釘。");
+    }
+
+    function copyVehiclePoints() {
+      const text = vehiclePoints().map(rawPointInfo).join("\n\n");
+      copyText(text || "目前沒有廣告車定位點。");
+    }
+
+    function downloadBillboardCsv() {
+      const headers = ["看板名稱", "地址", "緯度", "經度", "Google Maps 連結", "看板類型", "看板尺寸", "施工備註"];
+      const rows = state.billboards.filter(hasLatLng).map((item) => [item.name || item.code, item.address, item.lat, item.lng, googleMapsUrl(item.lat, item.lng), item.type, item.size, item.note || item.contractNote || ""]);
+      downloadCsv("看板圖釘位置.csv", headers, rows);
+    }
+
+    function downloadSmallCsv() {
+      const headers = ["編號", "類型", "地址或位置描述", "緯度", "經度", "Google Maps 連結", "預計使用版本", "實際使用版本", "狀態", "拆除備註"];
+      const rows = state.smallAds.filter(hasLatLng).map((item) => [item.code, item.type, item.address, item.lat, item.lng, googleMapsUrl(item.lat, item.lng), item.plannedVersion, item.actualVersion, item.status, item.note]);
+      downloadCsv("旗幟小型廣告點位.csv", headers, rows);
+    }
+
+    function downloadVehicleCsv() {
+      const headers = ["日期", "車輛", "司機", "定位類型", "緯度", "經度", "Google Maps 連結", "備註"];
+      const rows = vehiclePoints().map((point) => [point.date, point.vehicle, point.driver, point.type, point.lat, point.lng, googleMapsUrl(point.lat, point.lng), point.note || point.title]);
+      downloadCsv("廣告車定位點.csv", headers, rows);
+    }
+
+    function downloadCsv(filename, headers, rows) {
+      const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+      downloadText(filename, "\ufeff" + csv, "text/csv;charset=utf-8");
+    }
+
+    function exportJson() {
+      downloadText(`選舉廣告管理備份-${todayString()}.json`, JSON.stringify(state, null, 2), "application/json");
+    }
+
+    function importJson(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const imported = JSON.parse(reader.result);
+          state = { ...DEFAULT_STATE, ...imported, settings: { ...DEFAULT_STATE.settings, ...(imported.settings || {}) } };
+          saveState("備份已匯入", { syncAll: true });
+          setupSelects();
+          showToast("備份匯入完成");
+        } catch (error) {
+          showToast("備份檔格式錯誤，無法匯入。");
+        }
+      };
+      reader.readAsText(file, "utf-8");
+      event.target.value = "";
+    }
+
+    function buildSearchIndex() {
+      return [
+        ...state.billboards.map((item) => ({
+          id: item.id,
+          category: "看板",
+          title: item.name || item.code || "看板",
+          subtitle: item.type,
+          status: item.status,
+          type: item.type,
+          location: item.address,
+          date: item.installedDate || item.constructionScheduledDate || item.leaseStart,
+          paymentStatus: item.paymentStatus,
+          receiptNeeded: item.receiptNeeded,
+          receiptIssued: item.receiptIssued,
+          village: item.village,
+          road: item.road,
+          vendor: [item.outputVendor, item.constructionVendor].join(" "),
+          text: flattenText(item),
+          action: "edit-billboard"
+        })),
+        ...state.vehicles.map((item) => ({
+          id: item.id,
+          category: "車輛",
+          title: item.plate || item.code || "車輛",
+          subtitle: item.type,
+          status: item.status,
+          type: item.type,
+          location: item.ownerAddress,
+          date: item.updatedAt,
+          text: flattenText(item),
+          action: "edit-vehicle"
+        })),
+        ...state.drivers.map((item) => ({
+          id: item.id,
+          category: "司機",
+          title: item.name || item.code || "司機",
+          subtitle: item.vehicleTypes,
+          status: item.status,
+          type: item.vehicleTypes,
+          location: item.address,
+          date: item.updatedAt,
+          text: flattenText(item),
+          action: "edit-driver"
+        })),
+        ...state.vehicleShifts.map((item) => ({
+          id: item.id,
+          category: "出車",
+          title: `${item.date || ""} ${vehicleLabel(getById("vehicles", item.vehicleId))}`,
+          subtitle: getById("drivers", item.driverId)?.name || "",
+          status: item.clockOutTime ? "已完成" : "處理中",
+          type: item.promoType,
+          location: item.area,
+          date: item.date,
+          text: flattenText(item),
+          action: "edit-shift"
+        })),
+        ...state.smallAds.map((item) => ({
+          id: item.id,
+          category: "小型廣告",
+          title: item.code || item.type || "小型廣告",
+          subtitle: item.plannedVersion || item.actualVersion,
+          status: item.status,
+          type: item.type,
+          location: item.address,
+          date: item.installDate || item.removalScheduledDate,
+          village: item.village,
+          road: item.road,
+          installed: item.installed,
+          needRemoval: item.needRemoval,
+          text: flattenText(item),
+          action: "edit-small"
+        })),
+        ...state.vendors.map((item) => ({
+          id: item.id,
+          category: "廠商",
+          title: item.name || "廠商",
+          subtitle: item.type,
+          type: item.type,
+          vendor: item.name,
+          date: item.updatedAt,
+          text: flattenText(item),
+          action: "edit-vendor"
+        }))
+      ];
+    }
+
+    function matchGlobalFilters(item) {
+      const keyword = $("#globalSearchInput").value.trim();
+      const category = $("#globalCategoryFilter").value;
+      const status = $("#globalStatusFilter").value;
+      const type = $("#globalTypeFilter").value;
+      const village = $("#globalVillageFilter").value.trim();
+      const road = $("#globalRoadFilter").value.trim();
+      const vendor = $("#globalVendorFilter").value.trim();
+      const payment = $("#globalPaymentFilter").value;
+      const receiptNeeded = $("#globalReceiptNeededFilter").value;
+      const receiptIssued = $("#globalReceiptIssuedFilter").value;
+      const installed = $("#globalInstalledFilter").value;
+      const needRemoval = $("#globalNeedRemovalFilter").value;
+      const start = $("#globalDateStartFilter").value;
+      const end = $("#globalDateEndFilter").value;
+      if (keyword && !item.text.includes(keyword)) return false;
+      if (category && item.category !== category) return false;
+      if (status && item.status !== status) return false;
+      if (type && item.type !== type) return false;
+      if (village && !(item.village || "").includes(village)) return false;
+      if (road && !(item.road || "").includes(road)) return false;
+      if (vendor && !(item.vendor || "").includes(vendor)) return false;
+      if (payment && item.paymentStatus !== payment) return false;
+      if (receiptNeeded && Boolean(item.receiptNeeded) !== (receiptNeeded === "yes")) return false;
+      if (receiptIssued && Boolean(item.receiptIssued) !== (receiptIssued === "yes")) return false;
+      if (installed && Boolean(item.installed) !== (installed === "yes")) return false;
+      if (needRemoval && Boolean(item.needRemoval) !== (needRemoval === "yes")) return false;
+      if (start && item.date && item.date.slice(0, 10) < start) return false;
+      if (end && item.date && item.date.slice(0, 10) > end) return false;
+      return true;
+    }
+
+    function resetGlobalSearch() {
+      ["globalSearchInput", "globalVillageFilter", "globalRoadFilter", "globalVendorFilter", "globalDateStartFilter", "globalDateEndFilter"].forEach((id) => $("#" + id).value = "");
+      ["globalCategoryFilter", "globalStatusFilter", "globalTypeFilter", "globalPaymentFilter", "globalReceiptNeededFilter", "globalReceiptIssuedFilter", "globalInstalledFilter", "globalNeedRemovalFilter"].forEach((id) => $("#" + id).value = "");
+      renderSearchResults();
+    }
+
+    function calculateCosts() {
+      const lease = sum(state.billboards, "leaseCost") + sum(state.vehicles, "leaseCost");
+      const output = sum(state.billboards, "outputCost");
+      const construction = sum(state.billboards, "constructionCost");
+      const vehicle = state.vehicleShifts.reduce((total, shift) => {
+        const vehicle = getById("vehicles", shift.vehicleId);
+        return total + parseNumber(vehicle?.dailyCost);
+      }, 0);
+      const driver = state.vehicleShifts.reduce((total, shift) => {
+        const driver = getById("drivers", shift.driverId);
+        return total + parseNumber(driver?.dayWage);
+      }, 0);
+      const fuel = sum(state.vehicleShifts, "fuelCost");
+      return { lease, output, construction, vehicle, driver, fuel, total: lease + output + construction + vehicle + driver + fuel };
+    }
+
+    function collectWeekItems() {
+      const result = [];
+      constructionPendingItems().forEach((item) => result.push(item));
+      receiptPendingItems().forEach((item) => result.push(item));
+      removalPendingItems().forEach((item) => result.push(item));
+      return result.slice(0, 20);
+    }
+
+    function collectTodayItems() {
+      const today = todayString();
+      return [
+        ...state.billboards
+          .filter((item) => item.constructionScheduledDate === today && item.status !== "已上架" && item.status !== "已拆除")
+          .map((item) => miniCard("今日看板施工", item.name || item.code, `${item.constructionScheduledDate}｜${item.address || ""}`, "edit-billboard", item.id)),
+        ...state.billboards
+          .filter((item) => item.removalScheduledDate === today && item.status !== "已拆除")
+          .map((item) => miniCard("今日看板拆除", item.name || item.code, `${item.removalScheduledDate}｜${item.address || ""}`, "edit-billboard", item.id)),
+        ...state.smallAds
+          .filter((item) => item.removalScheduledDate === today && item.status !== "已拆除")
+          .map((item) => miniCard("今日小型廣告拆除", item.code || item.type, `${item.removalScheduledDate}｜${item.address || ""}`, "edit-small", item.id)),
+        ...state.billboards
+          .filter((item) => item.receiptNeeded && !item.receiptIssued && item.receiptDate === today)
+          .map((item) => miniCard("今日收據 / 領據", item.name || item.code, `${item.receiptName || item.ownerName || ""}｜${formatMoney(item.receiptAmount || item.leaseCost)}`, "edit-billboard", item.id)),
+        ...state.vehicleShifts
+          .filter((shift) => shift.date === today)
+          .map((shift) => miniCard("今日出車", vehicleLabel(getById("vehicles", shift.vehicleId)) || shift.code, `${getById("drivers", shift.driverId)?.name || ""}｜${shift.area || ""}`, "edit-shift", shift.id))
+      ];
+    }
+
+    function receiptPendingItems() {
+      return state.billboards
+        .filter((item) => item.receiptNeeded && !item.receiptIssued)
+        .map((item) => miniCard("收據 / 領據待開立", item.name || item.code, `${item.receiptName || item.ownerName || ""}｜${formatMoney(item.receiptAmount || item.leaseCost)}`, "edit-billboard", item.id));
+    }
+
+    function constructionPendingItems() {
+      return state.billboards
+        .filter((item) => ["待輸出", "待施工"].includes(item.status) || ["輸出中", "待施工"].includes(item.constructionStatus))
+        .map((item) => miniCard("看板待施工", item.name || item.code, `${item.constructionScheduledDate || "未排日期"}｜${item.address || ""}`, "edit-billboard", item.id));
+    }
+
+    function removalPendingItems() {
+      const billboards = state.billboards
+        .filter((item) => item.removalScheduledDate && item.status !== "已拆除" && !item.removedDate)
+        .map((item) => miniCard("看板待拆除", item.name || item.code, `${item.removalScheduledDate}｜${item.address || ""}`, "edit-billboard", item.id));
+      const small = state.smallAds
+        .filter((item) => (item.needRemoval || item.status === "待拆除") && item.status !== "已拆除")
+        .map((item) => miniCard("小型廣告待拆除", item.code || item.type, `${item.removalScheduledDate || "未排日期"}｜${item.address || ""}`, "edit-small", item.id));
+      return [...billboards, ...small];
+    }
+
+    function miniCard(label, title, detail, action, id) {
+      return `
+        <article class="card">
+          <div class="card-head"><div class="card-title"><strong>${escapeHtml(title || "未命名")}</strong><span>${escapeHtml(detail || "")}</span></div><div class="badge-row">${badge(label, label.includes("拆除") || label.includes("收據") ? "gold" : "")}</div></div>
+          <div class="button-row"><button class="compact ghost" data-action="${action}" data-id="${id}" type="button"><i data-lucide="external-link"></i>查看</button></div>
+        </article>
+      `;
+    }
+
+    function renderMiniList(id, items, emptyText) {
+      $("#" + id).innerHTML = items.length ? items.join("") : empty(emptyText);
+    }
+
+    function vehiclePoints() {
+      const points = [];
+      state.vehicleShifts.forEach((shift) => {
+        const vehicle = getById("vehicles", shift.vehicleId);
+        const driver = getById("drivers", shift.driverId);
+        const base = {
+          date: shift.date,
+          vehicle: vehicleLabel(vehicle),
+          driver: driver ? driver.name : "",
+          shiftCode: shift.code
+        };
+        if (shift.clockInLat && shift.clockInLng) points.push({ ...base, title: `${base.vehicle} 上班打卡`, type: "上班打卡", lat: shift.clockInLat, lng: shift.clockInLng, note: shift.plannedRoute, color: COLOR.green });
+        if (shift.clockOutLat && shift.clockOutLng) points.push({ ...base, title: `${base.vehicle} 下班打卡`, type: "下班打卡", lat: shift.clockOutLat, lng: shift.clockOutLng, note: shift.actualRoute, color: COLOR.blue });
+        (shift.stops || []).forEach((stop) => points.push({ ...base, title: stop.name || "停靠點", type: "手動停靠點", lat: stop.lat, lng: stop.lng, note: stop.note, date: shift.date || stop.time, color: COLOR.coral }));
+      });
+      return points;
+    }
+
+    function pinInfo(kind, item) {
+      if (kind === "billboard") {
+        return [
+          `看板名稱：${item.name || item.code || ""}`,
+          `地址：${item.address || ""}`,
+          `經緯度：${item.lat || ""}, ${item.lng || ""}`,
+          `Google Maps：${googleMapsUrl(item.lat, item.lng)}`,
+          `看板類型：${item.type || ""}`,
+          `看板尺寸：${item.size || ""}`,
+          `施工備註：${item.note || item.contractNote || ""}`
+        ].join("\n");
+      }
+      return [
+        `編號：${item.code || ""}`,
+        `類型：${item.type || ""}`,
+        `位置：${item.address || ""}`,
+        `經緯度：${item.lat || ""}, ${item.lng || ""}`,
+        `Google Maps：${googleMapsUrl(item.lat, item.lng)}`,
+        `預計使用版本：${item.plannedVersion || ""}`,
+        `實際使用版本：${item.actualVersion || ""}`,
+        `狀態：${item.status || ""}`,
+        `備註：${item.note || item.versionNote || ""}`
+      ].join("\n");
+    }
+
+    function rawPointInfo(point) {
+      return [
+        `日期：${point.date || ""}`,
+        `車輛：${point.vehicle || ""}`,
+        `司機：${point.driver || ""}`,
+        `定位類型：${point.type || ""}`,
+        `名稱：${point.title || ""}`,
+        `經緯度：${point.lat || ""}, ${point.lng || ""}`,
+        `Google Maps：${googleMapsUrl(point.lat, point.lng)}`,
+        `備註：${point.note || ""}`
+      ].join("\n");
+    }
+
+    function shiftInfo(shift) {
+      const vehicle = getById("vehicles", shift.vehicleId);
+      const driver = getById("drivers", shift.driverId);
+      return [
+        `出車編號：${shift.code || ""}`,
+        `日期：${shift.date || ""}`,
+        `車輛：${vehicleLabel(vehicle)}`,
+        `司機：${driver ? driver.name : ""}`,
+        `宣傳類型：${shift.promoType || ""}`,
+        `負責區域：${shift.area || ""}`,
+        `預定路線：${shift.plannedRoute || ""}`,
+        `實際路線：${shift.actualRoute || ""}`,
+        `上班定位：${latLngText(shift.clockInLat, shift.clockInLng)}`,
+        `下班定位：${latLngText(shift.clockOutLat, shift.clockOutLng)}`
+      ].join("\n");
+    }
+
+    function getById(table, id) {
+      return state[table].find((item) => item.id === id);
+    }
+
+    function countBy(items, field, value) {
+      return items.filter((item) => item[field] === value).length;
+    }
+
+    function sum(items, field) {
+      return items.reduce((total, item) => total + parseNumber(item[field]), 0);
+    }
+
+    function parseNumber(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : 0;
+    }
+
+    function formatMoney(value) {
+      const number = parseNumber(value);
+      return number ? `NT$ ${Math.round(number).toLocaleString("zh-TW")}` : "NT$ 0";
+    }
+
+    function metricCard([label, value], className = "") {
+      return `<article class="metric-card ${className}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></article>`;
+    }
+
+    function badge(text, className = "") {
+      return text ? `<span class="badge ${className}">${escapeHtml(text)}</span>` : "";
+    }
+
+    function statusBadgeClass(status) {
+      if (["已上架", "已架設", "已完成", "可派車", "可排班", "已開立", "施工完成"].includes(status)) return "green";
+      if (["待施工", "待拆除", "待請款", "處理中", "已排班"].includes(status)) return "gold";
+      if (["需修補", "需補拍照片", "需修正", "維修中", "遺失", "停用"].includes(status)) return "red";
+      return "";
+    }
+
+    function billboardColor(status) {
+      return {
+        "已上架": COLOR.green,
+        "待施工": COLOR.gold,
+        "接洽中": COLOR.blue2,
+        "待評估": COLOR.gray,
+        "需修補": COLOR.red,
+        "已拆除": COLOR.blue,
+        "已放棄": "#6B7280"
+      }[status] || COLOR.coral;
+    }
+
+    function smallAdColor(status) {
+      return {
+        "已架設": COLOR.green,
+        "待架設": COLOR.gold,
+        "待拆除": COLOR.amber,
+        "已拆除": COLOR.blue,
+        "需補拍照片": COLOR.red,
+        "需修正": COLOR.red,
+        "遺失": "#6B7280",
+        "已放棄": "#6B7280"
+      }[status] || COLOR.coral;
+    }
+
+    function hasLatLng(item) {
+      return item && item.lat !== "" && item.lng !== "" && !Number.isNaN(Number(item.lat)) && !Number.isNaN(Number(item.lng));
+    }
+
+    function googleMapsUrl(lat, lng) {
+      return hasLatLng({ lat, lng }) ? `https://www.google.com/maps?q=${lat},${lng}` : "https://www.google.com/maps";
+    }
+
+    function latLngText(lat, lng) {
+      return hasLatLng({ lat, lng }) ? `${lat}, ${lng}` : "-";
+    }
+
+    function vehicleLabel(vehicle) {
+      if (!vehicle) return "";
+      return [vehicle.plate, vehicle.type, vehicle.code].filter(Boolean).join("｜");
+    }
+
+    function nextCode(prefix, count) {
+      return `${prefix}-${String(count).padStart(3, "0")}`;
+    }
+
+    function todayString() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function localDateTimeValue(date) {
+      const offset = date.getTimezoneOffset();
+      const local = new Date(date.getTime() - offset * 60000);
+      return local.toISOString().slice(0, 16);
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "";
+      return new Date(value).toLocaleString("zh-TW", { hour12: false });
+    }
+
+    function hoursBetween(start, end) {
+      const diff = new Date(end) - new Date(start);
+      return diff > 0 ? (diff / 3600000).toFixed(1) : "";
+    }
+
+    function isWithinNextDays(dateString, days) {
+      if (!dateString) return false;
+      const today = new Date(todayString());
+      const target = new Date(dateString.slice(0, 10));
+      const diff = (target - today) / 86400000;
+      return diff >= 0 && diff <= days;
+    }
+
+    function shiftsThisWeek() {
+      return state.vehicleShifts.filter((shift) => isWithinNextDays(shift.date, 7));
+    }
+
+    function includesText(item, keyword) {
+      return flattenText(item).includes(keyword);
+    }
+
+    function flattenText(item) {
+      return Object.values(item || {}).flatMap((value) => {
+        if (Array.isArray(value)) return value.map(flattenText);
+        if (value && typeof value === "object") return flattenText(value);
+        return String(value ?? "");
+      }).join(" ");
+    }
+
+    function safeJson(value, fallback) {
+      try {
+        return JSON.parse(value || "[]");
+      } catch {
+        return fallback;
+      }
+    }
+
+    function imageStrip(images, raw = false) {
+      const html = images.filter(Boolean).map((src) => `<img class="thumb" alt="上傳圖片預覽" src="${src}">`).join("");
+      if (raw) return html || `<span class="field-note">尚未上傳圖片</span>`;
+      return html ? `<div class="thumb-grid">${html}</div>` : "";
+    }
+
+    function empty(text) {
+      return `<div class="empty">${escapeHtml(text)}</div>`;
+    }
+
+    function summaryRows(category, items, field) {
+      const counts = {};
+      items.forEach((item) => counts[item[field] || "未設定"] = (counts[item[field] || "未設定"] || 0) + 1);
+      return Object.entries(counts).map(([status, count]) => [category, status, count]);
+    }
+
+    function makeTable(headers, rows) {
+      return `
+        <table>
+          <thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
+          <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(String(cell ?? ""))}</td>`).join("")}</tr>`).join("")}</tbody>
+        </table>
+      `;
+    }
+
+    function csvCell(value) {
+      return `"${String(value ?? "").replaceAll('"', '""')}"`;
+    }
+
+    function downloadText(filename, text, type) {
+      const blob = new Blob([text], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyText(text) {
+      if (!text) {
+        showToast("沒有可複製的內容。");
+        return;
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => showToast("已複製到剪貼簿"));
+        return;
+      }
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+      showToast("已複製到剪貼簿");
+    }
+
+    function showToast(message) {
+      const toast = $("#toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function encodeAttr(value) {
+      return encodeURIComponent(value);
+    }
+
+    function decodeAttr(value) {
+      return decodeURIComponent(value);
+    }
+
+    function refreshIcons() {
+      if (window.lucide) window.lucide.createIcons();
+    }
+  </script>
+</body>
+</html>
